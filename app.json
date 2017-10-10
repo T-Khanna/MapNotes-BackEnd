@@ -1,0 +1,12 @@
+{
+  "name": "Map Notes",
+  "description": "map notes",
+  "keywords": [
+    "getting-started",
+    "go",
+    "sample",
+    "example"
+  ],
+  "image": "heroku/go:1.6",
+  "repository": "http://gitlab.doc.ic.ac.uk/g1736215/MapNotes"
+}
