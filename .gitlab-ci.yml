@@ -4,10 +4,9 @@ stages:
  - test
 
 before_script:
- - export GOPATH=$(dirname $CI_PROJECT_DIR)/go
+ - export GOPATH=$(dirname $CI_PROJECT_DIR)
  - go get github.com/tools/godep
- - go get gitlab.doc.ic.ac.uk/g1736215/MapNotes
- - cd /go/src/gitlab.doc.ic.ac.uk/g1736215/MapNotes
+ - export PATH=$PATH:$(go env GOPATH)/bin
 
 build-my-project:
  stage: build
