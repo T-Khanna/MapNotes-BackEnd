@@ -2,5 +2,16 @@
 	"ImportPath": "gitlab.doc.ic.ac.uk/g1736215/MapNotes",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
-	"Deps": []
+	"Deps": [
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-183-g30d59ea",
+			"Rev": "30d59eaf01528a141f560f34f0208e0ec5218e75"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
+			"Comment": "go1.0-cutoff-183-g30d59ea",
+			"Rev": "30d59eaf01528a141f560f34f0208e0ec5218e75"
+		}
+	]
 }
