@@ -61,4 +61,6 @@ func main() {
 
 	//Starts the server at designated port
 	http.ListenAndServe(":"+string(port), nil)
+
+	fmt.Println("Started server on port", port)
 }
