@@ -48,11 +48,13 @@ func main() {
 	}
 
 	//Connect to database
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	_, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmtPrintln("Connected to database.")
+	fmt.Println("Connected to database.")
+
+	fmt.Println("Starting server on port", port)
 
 	//Tells the server how to handle paths that equal the first arg
 	http.HandleFunc("/", handler)
