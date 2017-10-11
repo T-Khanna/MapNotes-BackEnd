@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -44,6 +46,14 @@ func main() {
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
+
+	//Connect to database
+	_, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Connected to database.")
+
 	fmt.Println("Starting server on port", port)
 
 	//Tells the server how to handle paths that equal the first arg
