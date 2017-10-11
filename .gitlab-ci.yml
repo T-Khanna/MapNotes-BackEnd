@@ -4,6 +4,7 @@ stages:
  - test
 
 before_script:
+ - export GOPATH=$(dirname $CI_PROJECT_DIR)/go
  - go get github.com/tools/godep
  - go get gitlab.doc.ic.ac.uk/g1736215/MapNotes
  - cd /go/src/gitlab.doc.ic.ac.uk/g1736215/MapNotes
@@ -18,4 +19,4 @@ test-my-project:
  stage: test
  script:
    - godep restore
-- godep go test -v -cover ./...
+   - godep go test -v -cover ./...
