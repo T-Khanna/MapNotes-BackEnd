@@ -2,20 +2,28 @@ image: golang:1.7
 stages:
  - build
  - test
+ - deploy
 
 before_script:
+ - sudo apt-get -y -qq install ruby-dev golang-go
+ - sudo gem install dpl
  - export GOPATH=$(dirname $CI_PROJECT_DIR)
  - go get github.com/tools/godep
  - export PATH=$PATH:$(go env GOPATH)/bin
+ - godep restore
 
-build-my-project:
+build-mapnotes:
  stage: build
  script:
-   - godep restore
-   - godep go build
+   - go build
 
-test-my-project:
+test-mapnotes:
  stage: test
  script:
-   - godep restore
-   - godep go test -v -cover ./...
+   - go test
+
+deploy-mapnotes:
+  stage: deploy
+  only: master
+  script:
+    - echo deploy
