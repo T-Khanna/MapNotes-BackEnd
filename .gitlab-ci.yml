@@ -24,6 +24,7 @@ test-mapnotes:
 
 deploy-mapnotes:
   stage: deploy
-  only: master
+  only: 
+    - master
   script:
     - echo deploy
