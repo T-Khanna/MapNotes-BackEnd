@@ -28,3 +28,4 @@ deploy-mapnotes:
     - master
   script:
     - echo deploy
+    - dpl --provider=heroku --app=mapnotes-backend --api-key=$HEROKU_STAGING_API_KEY
