@@ -1,4 +1,8 @@
 image: golang:1.7
+
+variables:
+  REPO_NAME: gitlab.doc.ic.ac.uk/g1736215/MapNotes
+
 stages:
  - build
  - test
@@ -7,9 +11,12 @@ stages:
 before_script:
  - sudo apt-get -y -qq install ruby-dev golang-go
  - sudo gem install dpl
- - export GOPATH=$(dirname $CI_PROJECT_DIR)
- - go get github.com/tools/godep
+ - mkdir -p $HOME/go/src/$REPO_NAME
+ - export GOPATH=$HOME/go
+ - rsync -a $CI_PROJECT_DIR/* $GOPATH/src/$REPO_NAME
  - export PATH=$PATH:$(go env GOPATH)/bin
+ - cd $GOPATH/src/$REPO_NAME
+ - go get github.com/tools/godep
  - godep restore
 
 build-mapnotes:
