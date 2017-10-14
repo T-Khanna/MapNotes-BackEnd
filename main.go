@@ -1,9 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -48,10 +47,7 @@ func main() {
 	}
 
 	//Connect to database
-	_, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	models.InitDB()
 	fmt.Println("Connected to database.")
 
 	fmt.Println("Starting server on port", port)
@@ -62,5 +58,4 @@ func main() {
 	//Starts the server at designated port
 	http.ListenAndServe(":"+string(port), nil)
 
-	fmt.Println("Started server on port", port)
 }
