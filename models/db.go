@@ -9,6 +9,16 @@ import (
 
 var db *sql.DB
 
+type Note struct {
+	Title      string
+	Comment    string
+	Start_time string
+	End_time   string
+	Longitude  float64
+	Latitude   float64
+	Id         int
+}
+
 func InitDB() {
 	var err error
 	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -24,13 +34,34 @@ func SetDB(otherDB *sql.DB) {
 	db = otherDB
 }
 
-func InsertNote(title string, comments string, timestamp string) {
-	stmt, err := db.Prepare("INSERT INTO notes(title, comments, time) VALUES($1, $2, $3)")
+func InsertNote(note Note) {
+	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6)")
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = stmt.Exec(title, comments, timestamp)
+	_, err = stmt.Exec(note.Title, note.Comment, note.Start_time, note.End_time,
+		note.Longitude, note.Latitude)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GetAllNotes() []Note {
+	rows, err := db.Query("SELECT title, comments, startTime, endTime, longitude, latitude, id FROM notes")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	list := make([]Note, 0)
+	for rows.Next() {
+		var n Note
+		err := rows.Scan(&n.Title, &n.Comment, &n.Start_time, &n.End_time,
+			&n.Longitude, &n.Latitude, &n.Id)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			list = append(list, n)
+		}
+	}
+	return list
 }
