@@ -5,6 +5,7 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"os"
+
 )
 
 var db *sql.DB
@@ -35,8 +36,9 @@ func SetDB(otherDB *sql.DB) {
 	db = otherDB
 }
 
-func InsertNote(note Note) {
+func InsertNote(note Note) (id int64){
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6)")
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,6 +47,14 @@ func InsertNote(note Note) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	rows, err := db.Query("SELECT max(id) FROM notes")
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+	}
+
+	return
 }
 
 func DeleteNote(title string) {
