@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"encoding/json"
-	"github.com/gorilla/mux"
 )
 
 type Page struct {
@@ -61,14 +60,11 @@ func handleRequests() {
 	fmt.Println("Starting server on port", port)
 
 	//Tells the server how to handle paths that equal the first arg
-	// mux.Router matches incoming requests against a list of registered routes
-	// and calls a handler for the route that matches the URL or other conditions.
-	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.HandleFunc("/", handler)
-	myRouter.HandleFunc("/notes", returnAllNotes)
+	http.HandleFunc("/", handler)
+	http.HandleFunc("/notes", returnAllNotes)
 
 	//Starts the server at designated port
-	http.ListenAndServe(":"+string(port), myRouter)
+	http.ListenAndServe(":"+string(port), nil)
 }
 
 func main() {
