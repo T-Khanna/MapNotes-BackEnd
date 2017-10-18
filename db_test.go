@@ -75,3 +75,26 @@ func TestGetAllNotes(t *testing.T) {
 	assert.Equal(t, returnedRows[0].Latitude, latitude)
 	assert.Equal(t, returnedRows[0].Id, id)
 }
+
+func TestDelete(t *testing.T){
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		}
+		models.SetDB(db)
+		defer db.Close()
+
+		var title string = "Test title"
+
+		mock.ExpectPrepare("DELETE FROM Notes WHERE title = \\$1").
+		ExpectExec().
+		WithArgs(title).
+		WillReturnResult(sqlmock.NewResult(1,1))
+		models.DeleteNote(title)
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("There were unfufilled expectations: %s", err)
+		}
+
+}

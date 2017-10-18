@@ -7,11 +7,19 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"encoding/json"
+	"github.com/gorilla/mux"
 )
 
 type Page struct {
 	Title string
 	Body  []byte
+}
+
+
+func returnAllNotes(w http.ResponseWriter, r *http.Request) {
+		notes := models.GetAllNotes()
+		json.NewEncoder(w).Encode(notes)
 }
 
 func (p *Page) save() error {
@@ -40,7 +48,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
+func handleRequests() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("$PORT must be set")
@@ -53,9 +61,16 @@ func main() {
 	fmt.Println("Starting server on port", port)
 
 	//Tells the server how to handle paths that equal the first arg
-	http.HandleFunc("/", handler)
+	// mux.Router matches incoming requests against a list of registered routes
+	// and calls a handler for the route that matches the URL or other conditions.
+	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.HandleFunc("/", handler)
+	myRouter.HandleFunc("/notes", returnAllNotes)
 
 	//Starts the server at designated port
-	http.ListenAndServe(":"+string(port), nil)
+	http.ListenAndServe(":"+string(port), myRouter)
+}
 
+func main() {
+	handleRequests()
 }

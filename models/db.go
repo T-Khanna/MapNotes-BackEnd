@@ -30,6 +30,7 @@ func InitDB() {
 	}
 }
 
+
 func SetDB(otherDB *sql.DB) {
 	db = otherDB
 }
@@ -45,6 +46,19 @@ func InsertNote(note Note) {
 		log.Fatal(err)
 	}
 }
+
+func DeleteNote(title string) {
+	stmt, err := db.Prepare("DELETE FROM Notes WHERE title = $1")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = stmt.Exec(title)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 
 func GetAllNotes() []Note {
 	rows, err := db.Query("SELECT title, comments, startTime, endTime, longitude, latitude, id FROM notes")
