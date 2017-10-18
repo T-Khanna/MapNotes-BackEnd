@@ -73,6 +73,28 @@ func DeleteNote(title string) {
 	}
 }
 
+func GetTimePeriodNotes(start_time, end_time string) []Note {
+
+	rows, err := db.Query("SELECT * FROM notes WHERE (starrtime >= $1 AND starttime <= $2) OR (endtime >= $1 AND endtime <= $2) ", start_time, end_time);
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	list := make([]Note, 0)
+	for rows.Next() {
+		var n Note
+		err := rows.Scan(&n.Title, &n.Comment, &n.Start_time, &n.End_time,
+			&n.Longitude, &n.Latitude, &n.Id)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			list = append(list, n)
+		}
+	}
+	return list
+}
+
 
 func GetAllNotes() []Note {
 	rows, err := db.Query("SELECT title, comments, startTime, endTime, longitude, latitude, id FROM notes")
