@@ -22,15 +22,20 @@ func TestInsert(t *testing.T) {
 	var timestamp = jodaTime.Format("YYYY-MM-dd HH:mm", time.Now())
 	var longitude float64 = 1.0
 	var latitude float64 = 2.0
+	var id int = -1
 	//Input string will be converted into a regex
 	//Hence I need to double backslash all the special characters
 	//One to escape it in a string context, another to escape in a regex context
+
 	mock.ExpectPrepare("INSERT INTO notes\\(title, comments, startTime, endTime, longitude, latitude\\) VALUES\\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6\\)").
 		ExpectExec().
 		WithArgs(title, comment, timestamp, timestamp, longitude, latitude).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	rows := sqlmock.NewRows([]string{"max"}).AddRow(1)
+  mock.ExpectQuery("SELECT max\\(id\\) FROM notes").WillReturnRows(rows)
 	models.InsertNote(models.Note{Title: title, Comment: comment,
-		Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude})
+		Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id})
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}

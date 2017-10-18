@@ -50,6 +50,10 @@ func InsertNote(note Note) (id int64){
 
 	rows, err := db.Query("SELECT max(id) FROM notes")
 
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	for rows.Next() {
 		err = rows.Scan(&id)
 	}
