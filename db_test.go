@@ -104,3 +104,46 @@ func TestDelete(t *testing.T){
 		}
 
 }
+
+func TestGetTimePeriodNotes(t *testing.T){
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	models.SetDB(db)
+	defer db.Close()
+
+	var title string = "testing title"
+	var comment string = "testing comments"
+	var startTime string = "2017-01-01 00:00"
+	var endTime string = "2017-05-05 00:00"
+	var longitude float64 = 1.0
+	var latitude float64 = 2.0
+	var id int = 1
+
+	rows := sqlmock.NewRows([]string{"title", "comments", "startTime", "endTime",
+		"longitude", "latitude", "id"}).
+		AddRow(title, comment, startTime, endTime, longitude, latitude, id).
+		AddRow("Harry's world", "Hi Harry", "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, 1)
+
+	mock.ExpectQuery("SELECT \\* FROM notes WHERE \\(starttime <= \\$1 AND endtime >= \\$1\\)").
+		WithArgs("2017-01-01 00:00").
+		WillReturnRows(rows)
+	returnedRows := models.GetTimePeriodNotes("2017-01-01 00:00")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfufilled expectations: %s", err)
+	}
+	if len(returnedRows) != 2 {
+		t.Errorf("Function did not return correct number of rows")
+	}
+
+	assert.Equal(t, returnedRows[0].Title, title)
+	assert.Equal(t, returnedRows[0].Comment, comment)
+	assert.Equal(t, returnedRows[0].Start_time, startTime)
+	assert.Equal(t, returnedRows[0].End_time, endTime)
+	assert.Equal(t, returnedRows[0].Longitude, longitude)
+	assert.Equal(t, returnedRows[0].Latitude, latitude)
+	assert.Equal(t, returnedRows[0].Id, id)
+
+}

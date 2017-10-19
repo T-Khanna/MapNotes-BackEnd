@@ -73,7 +73,7 @@ func DeleteNote(title string) {
 
 func GetTimePeriodNotes(time string) []Note {
 
-	rows, err := db.Query("SELECT * FROM notes WHERE (starrtime <= $1 AND endtime >= $1) ", time)
+	rows, err := db.Query("SELECT * FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
 
 	if err != nil {
 		log.Fatal(err)
