@@ -5,7 +5,6 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"os"
-
 )
 
 var db *sql.DB
@@ -31,12 +30,11 @@ func InitDB() {
 	}
 }
 
-
 func SetDB(otherDB *sql.DB) {
 	db = otherDB
 }
 
-func InsertNote(note Note) (id int64){
+func InsertNote(note Note) (id int64) {
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6)")
 
 	if err != nil {
@@ -73,6 +71,16 @@ func DeleteNote(title string) {
 	}
 }
 
+func GetTimePeriodNotes(time string) []Note {
+
+	rows, err := db.Query("SELECT * FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	return ConvertResultToNotes(rows)
+}
 
 func GetAllNotes() []Note {
 	rows, err := db.Query("SELECT title, comments, startTime, endTime, longitude, latitude, id FROM notes")
@@ -80,6 +88,12 @@ func GetAllNotes() []Note {
 		log.Fatal(err)
 	}
 	defer rows.Close()
+
+	return ConvertResultToNotes(rows)
+}
+
+func ConvertResultToNotes(rows *sql.Rows) []Note {
+
 	list := make([]Note, 0)
 	for rows.Next() {
 		var n Note
