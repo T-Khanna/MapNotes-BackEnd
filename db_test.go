@@ -96,6 +96,7 @@ func TestDelete(t *testing.T){
 		ExpectExec().
 		WithArgs(title).
 		WillReturnResult(sqlmock.NewResult(1,1))
+
 		models.DeleteNote(title)
 
 		if err := mock.ExpectationsWereMet(); err != nil {
