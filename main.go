@@ -20,6 +20,10 @@ type TimeKey struct {
 	Time string
 }
 
+type IdKey struct {
+	Id int64
+}
+
 type ReturnJSON struct {
 	Notes []models.Note
 }
@@ -66,6 +70,8 @@ func noteHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		fmt.Fprintf(w, strconv.FormatInt(id, 10)+"\n")
+
+	case "DELETE"
 	default:
 		http.Error(w, "Invalid request method.", 405)
 	}
