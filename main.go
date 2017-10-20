@@ -16,12 +16,29 @@ type Page struct {
 	Body  []byte
 }
 
+type TimeKey struct {
+	Time string
+}
+
 type ReturnJSON struct {
 	Notes []models.Note
 }
 
 func returnAllNotes(w http.ResponseWriter, r *http.Request) {
-	notes := models.GetAllNotes()
+
+	decoder := json.NewDecoder(r.Body)
+	var timejson TimeKey
+	err := decoder.Decode(&timejson)
+
+	var notes []models.Note
+
+	if err != nil {
+		notes = models.GetAllNotes()
+
+	}else{
+		notes = models.GetTimePeriodNotes(timejson.Time)
+	}
+
 	json.NewEncoder(w).Encode(ReturnJSON{Notes: notes})
 }
 
