@@ -1,13 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"encoding/json"
+	"strconv"
 )
 
 type Page struct {
@@ -15,10 +16,38 @@ type Page struct {
 	Body  []byte
 }
 
-
 func returnAllNotes(w http.ResponseWriter, r *http.Request) {
-		notes := models.GetAllNotes()
-		json.NewEncoder(w).Encode(notes)
+	notes := models.GetAllNotes()
+	json.NewEncoder(w).Encode(notes)
+}
+
+func noteHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		fmt.Fprintf(w, "Hello world!123\n")
+	case "POST":
+		fmt.Println("Received POST to ", r.URL.Path)
+		fmt.Println("Inserting note into database")
+
+		decoder := json.NewDecoder(r.Body)
+		var note models.Note
+		err := decoder.Decode(&note)
+
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error could not decode POST request. Possibly incorrect JSON string\n")
+			return
+		}
+
+		var id int64 = models.InsertNote(note)
+		if id == -1 {
+			fmt.Fprintf(w, "Database encountered an error. Failed to insert note.")
+			return
+		}
+		fmt.Fprintf(w, strconv.FormatInt(id, 10)+"\n")
+	default:
+		http.Error(w, "Invalid request method.", 405)
+	}
 }
 
 func (p *Page) save() error {
@@ -61,7 +90,8 @@ func handleRequests() {
 
 	//Tells the server how to handle paths that equal the first arg
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/notes", returnAllNotes)
+	http.HandleFunc("/note", noteHandler)
+	http.HandleFunc("/allnotes", returnAllNotes)
 
 	//Starts the server at designated port
 	http.ListenAndServe(":"+string(port), nil)

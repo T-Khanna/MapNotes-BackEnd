@@ -1,13 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/stretchr/testify/assert"
 	"github.com/vjeantet/jodaTime"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 	"testing"
 	"time"
-	"database/sql"
 )
 
 func TestInsert(t *testing.T) {
@@ -30,7 +30,7 @@ func TestInsert(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rows := sqlmock.NewRows([]string{"max"}).AddRow(1)
-  mock.ExpectQuery("SELECT max\\(id\\) FROM notes").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT max\\(id\\) FROM notes").WillReturnRows(rows)
 	models.InsertNote(models.Note{Title: title, Comment: comment,
 		Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id})
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -62,25 +62,25 @@ func TestGetAllNotes(t *testing.T) {
 	assert.Equal(t, returnedRows[0].Id, note.Id)
 }
 
-func TestDelete(t *testing.T){
+func TestDelete(t *testing.T) {
 
-	  db, mock := initMockDB(t)
-		defer db.Close()
+	db, mock := initMockDB(t)
+	defer db.Close()
 
-		var title string = "Test title"
-		mock.ExpectPrepare("DELETE FROM Notes WHERE title = \\$1").
+	var title string = "Test title"
+	mock.ExpectPrepare("DELETE FROM Notes WHERE title = \\$1").
 		ExpectExec().
 		WithArgs(title).
-		WillReturnResult(sqlmock.NewResult(1,1))
-		models.DeleteNote(title)
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	models.DeleteNote(title)
 
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("There were unfufilled expectations: %s", err)
-		}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfufilled expectations: %s", err)
+	}
 
 }
 
-func TestGetTimePeriodNotes(t *testing.T){
+func TestGetTimePeriodNotes(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
@@ -117,7 +117,7 @@ func initMockDB(t *testing.T) (db *sql.DB, mock sqlmock.Sqlmock) {
 	return
 }
 
-func generateTestRows() (rows *sqlmock.Rows, note models.Note){
+func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	var title string = "testing title"
 	var comment string = "testing comments"
 	var startTime string = "2017-01-01 00:00"
