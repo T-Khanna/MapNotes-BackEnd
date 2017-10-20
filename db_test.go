@@ -67,12 +67,12 @@ func TestDelete(t *testing.T) {
 	db, mock := initMockDB(t)
 	defer db.Close()
 
-	var title string = "Test title"
-	mock.ExpectPrepare("DELETE FROM Notes WHERE title = \\$1").
+	var id int64 = 2
+	mock.ExpectPrepare("DELETE FROM Notes WHERE id = \\$1").
 		ExpectExec().
-		WithArgs(title).
+		WithArgs(id).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-	models.DeleteNote(title)
+	models.DeleteNote(id)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)

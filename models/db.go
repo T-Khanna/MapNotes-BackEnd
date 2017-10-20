@@ -66,7 +66,7 @@ func DeleteNote(id int64) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = stmt.Exec(title)
+	_, err = stmt.Exec(id)
 	if err != nil {
 		log.Fatal(err)
 	}

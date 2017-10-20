@@ -88,7 +88,7 @@ func noteHandler(w http.ResponseWriter, r *http.Request) {
     //For now we are just passing in a dummy string
 		//Eventually we will pass in the id
 		//This will be changed once the DeleteNote query and its test have been changed
-		models.DeleteNote("title")
+		models.DeleteNote(deleteID.Id)
 
 	default:
 		http.Error(w, "Invalid request method.", 405)
