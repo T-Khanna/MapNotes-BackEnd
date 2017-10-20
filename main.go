@@ -33,17 +33,19 @@ func returnAllNotes(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var timejson TimeKey
 	err := decoder.Decode(&timejson)
-
 	var notes []models.Note
 
 	if err != nil {
-		notes = models.GetAllNotes()
 
-	}else{
+		fmt.Fprintf(w, "Incorrect format for getting notes in a time period")
+
+	} else {
+
 		notes = models.GetTimePeriodNotes(timejson.Time)
+		json.NewEncoder(w).Encode(ReturnJSON{Notes: notes})
+
 	}
 
-	json.NewEncoder(w).Encode(ReturnJSON{Notes: notes})
 }
 
 func noteHandler(w http.ResponseWriter, r *http.Request) {
