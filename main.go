@@ -71,7 +71,7 @@ func noteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, strconv.FormatInt(id, 10)+"\n")
 
-	case "DELETE"
+	case "DELETE":
 	default:
 		http.Error(w, "Invalid request method.", 405)
 	}
