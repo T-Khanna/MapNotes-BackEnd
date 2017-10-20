@@ -28,26 +28,38 @@ type ReturnJSON struct {
 	Notes []models.Note
 }
 
-func returnAllNotes(w http.ResponseWriter, r *http.Request) {
+//Handler for the '/allnotes' Path
+//Used to get groups of notes
+func groupNotesHandler(w http.ResponseWriter, r *http.Request) {
 
-	decoder := json.NewDecoder(r.Body)
-	var timejson TimeKey
-	err := decoder.Decode(&timejson)
-	var notes []models.Note
+	switch r.Method {
 
-	if err != nil {
+	case "GET":
+		decoder := json.NewDecoder(r.Body)
+		var timejson TimeKey
+		err := decoder.Decode(&timejson)
+		var notes []models.Note
 
-		fmt.Fprintf(w, "Incorrect format for getting notes in a time period")
+		if err != nil {
 
-	} else {
+			fmt.Fprintf(w, "Incorrect format for getting notes in a time period")
 
-		notes = models.GetTimePeriodNotes(timejson.Time)
-		json.NewEncoder(w).Encode(ReturnJSON{Notes: notes})
+		} else {
+
+			notes = models.GetTimePeriodNotes(timejson.Time)
+			json.NewEncoder(w).Encode(ReturnJSON{Notes: notes})
+
+		}
+
+	default:
+		http.Error(w, "Invalid request method.", 405)
 
 	}
 
 }
 
+//handler for the '/note' Path
+//Used for inserting notes and deleting notes
 func noteHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
@@ -58,7 +70,6 @@ func noteHandler(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		fmt.Println("Received POST to ", r.URL.Path)
 		fmt.Println("Inserting note into database")
-
 
 		var note models.Note
 		err := decoder.Decode(&note)
@@ -81,11 +92,11 @@ func noteHandler(w http.ResponseWriter, r *http.Request) {
 		err := decoder.Decode(&deleteID)
 
 		if err != nil {
-			fmt.Fprintf(w, "Incorrect format for deleting a note");
+			fmt.Fprintf(w, "Incorrect format for deleting a note")
 			return
 		}
 
-    //For now we are just passing in a dummy string
+		//For now we are just passing in a dummy string
 		//Eventually we will pass in the id
 		//This will be changed once the DeleteNote query and its test have been changed
 		models.DeleteNote(deleteID.Id)
@@ -109,6 +120,7 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
+//Handler for the '/' path
 func handler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	//middle argument is HTML string
@@ -136,7 +148,7 @@ func handleRequests() {
 	//Tells the server how to handle paths that equal the first arg
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/note", noteHandler)
-	http.HandleFunc("/allnotes", returnAllNotes)
+	http.HandleFunc("/allnotes", groupNotesHandler)
 
 	//Starts the server at designated port
 	http.ListenAndServe(":"+string(port), nil)
