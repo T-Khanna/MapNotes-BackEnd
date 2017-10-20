@@ -16,9 +16,13 @@ type Page struct {
 	Body  []byte
 }
 
+type ReturnJSON struct {
+	Notes []models.Note
+}
+
 func returnAllNotes(w http.ResponseWriter, r *http.Request) {
 	notes := models.GetAllNotes()
-	json.NewEncoder(w).Encode(notes)
+	json.NewEncoder(w).Encode(ReturnJSON{Notes: notes})
 }
 
 func noteHandler(w http.ResponseWriter, r *http.Request) {
