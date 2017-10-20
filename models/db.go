@@ -38,7 +38,8 @@ func InsertNote(note Note) (id int64) {
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6)")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return -1
 	}
 	_, err = stmt.Exec(note.Title, note.Comment, note.Start_time, note.End_time,
 		note.Longitude, note.Latitude)
@@ -72,7 +73,6 @@ func DeleteNote(title string) {
 }
 
 func GetTimePeriodNotes(time string) []Note {
-
 	rows, err := db.Query("SELECT * FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
 
 	if err != nil {
