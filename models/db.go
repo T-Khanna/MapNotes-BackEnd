@@ -20,7 +20,7 @@ type Note struct {
 }
 
 type User struct {
-	Userid   string
+	Userid   int
 	Username string
 	Password string
 }
@@ -98,6 +98,7 @@ func InsertNote(note Note) (id int64) {
 	return
 }
 
+//Not a vital function, but here if a user did wish to delete their account
 func DeleteUser(id int64) {
 
 	stmt, err := db.Prepare("DELETE FROM users WHERE id = $1")
