@@ -60,13 +60,13 @@ func InsertNote(note Note) (id int64) {
 	return
 }
 
-func DeleteNote(title string) {
-	stmt, err := db.Prepare("DELETE FROM Notes WHERE title = $1")
+func DeleteNote(id int64) {
+	stmt, err := db.Prepare("DELETE FROM Notes WHERE id = $1")
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = stmt.Exec(title)
+	_, err = stmt.Exec(id)
 	if err != nil {
 		log.Fatal(err)
 	}
