@@ -133,6 +133,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func userHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+
+	case "GET":
+		fmt.Fprintf(w, "GET sent to /user")
+	case "POST":
+		fmt.Fprintf(w, "POST sent to /user")
+	default:
+		http.Error(w, "Invalid request method.", 405)
+
+	}
+
+}
+
 func handleRequests() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -149,6 +164,7 @@ func handleRequests() {
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/note", noteHandler)
 	http.HandleFunc("/allnotes", groupNotesHandler)
+	http.HandleFunc("/user", userHandler)
 
 	//Starts the server at designated port
 	http.ListenAndServe(":"+string(port), nil)
