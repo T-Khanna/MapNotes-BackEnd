@@ -69,7 +69,7 @@ func insertUser(user User) (id int64) {
 
 }
 
-//There is a lot of duplication here with insertUser
+//There is a lot of duplication here with InsertUser
 // which will be addressed soon
 func InsertNote(note Note) (id int64) {
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6)")
@@ -98,13 +98,31 @@ func InsertNote(note Note) (id int64) {
 	return
 }
 
+func DeleteUser(id int64) {
+
+	stmt, err := db.Prepare("DELETE FROM users WHERE id = $1")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = stmt.Exec(id)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+//Duplication here with DeleteUser
 func DeleteNote(id int64) {
 	stmt, err := db.Prepare("DELETE FROM Notes WHERE id = $1")
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	_, err = stmt.Exec(id)
+
 	if err != nil {
 		log.Fatal(err)
 	}
