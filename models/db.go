@@ -19,6 +19,12 @@ type Note struct {
 	Id         int
 }
 
+type User struct {
+	Userid   string
+	Username string
+	Password string
+}
+
 func InitDB() {
 	var err error
 	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -34,6 +40,37 @@ func SetDB(otherDB *sql.DB) {
 	db = otherDB
 }
 
+func insertUser(user User) (id int64) {
+
+	stmt, err := db.Prepare("INSERT INTO users(username, password) VALUES($1, $2)")
+
+	if err != nil {
+		log.Println(err)
+		return -1
+	}
+
+	_, err = stmt.Exec(user.Username, user.Password)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rows, err := db.Query("SELECT max(id) FROM users")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+	}
+
+	return
+
+}
+
+//There is a lot of duplication here with insertUser
+// which will be addressed soon
 func InsertNote(note Note) (id int64) {
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6)")
 
@@ -43,6 +80,7 @@ func InsertNote(note Note) (id int64) {
 	}
 	_, err = stmt.Exec(note.Title, note.Comment, note.Start_time, note.End_time,
 		note.Longitude, note.Latitude)
+
 	if err != nil {
 		log.Fatal(err)
 	}
