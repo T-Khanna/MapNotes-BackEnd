@@ -22,7 +22,7 @@ before_script:
 build-mapnotes:
  stage: build
  script:
-   - go build
+   - go install
 
 test-mapnotes:
  stage: test
