@@ -74,15 +74,16 @@ func deleteNote(id int64) error {
 	return nil
 }
 
-func GetTimePeriodNotes(time string) []Note {
+func GetTimePeriodNotes(time string) ([]Note, error) {
 	rows, err := db.Query("SELECT * FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return nil, err
 	}
 
 	defer rows.Close()
-	return ConvertResultToNotes(rows)
+	return ConvertResultToNotes(rows), nil
 }
 
 func GetAllNotes() []Note {

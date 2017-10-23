@@ -41,7 +41,17 @@ func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	notes := models.GetTimePeriodNotes(time)
+	notes, err := models.GetTimePeriodNotes(time)
+
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			err.Error(),
+			fmt.Sprintf("Error: Failed to get notes from database active at time %s", time),
+		)
+		return
+	}
+
 	respondWithJson(w, notes, http.StatusOK)
 }
 

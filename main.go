@@ -47,12 +47,11 @@ func initDatabase() {
 }
 
 func setupRoutes(router *httprouter.Router) {
-	// Test
-	router.GET("/", handlers.Handler)
-
 	// Notes
-	router.GET("/note", handlers.NoteHandler)
-	router.GET("/allnotes", handlers.GroupNotesHandler)
+	router.GET("/note/:time", handlers.NotesGetByTime)
+	router.GET("/allnotes", handlers.NotesGetAll)
+	router.POST("/note", handlers.NotesCreate)
+	router.DELETE("/note", handlers.NotesDelete)
 
 	// Users
 	router.GET("/user", handlers.UserHandler)
