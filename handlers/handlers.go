@@ -3,116 +3,16 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 
+	"github.com/julienschmidt/httprouter"
 )
 
-type TimeKey struct {
-	Time string
-}
-
-type IdKey struct {
-	Id int64
-}
-
-type ReturnJSON struct {
-	Notes []models.Note
-}
-
-//Handler for the '/allnotes' Path
-//Used to get groups of notes
-func GroupNotesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
-	switch r.Method {
-
-	case "GET":
-		decoder := json.NewDecoder(r.Body)
-		var timejson TimeKey
-		err := decoder.Decode(&timejson)
-		var notes []models.Note
-
-		if err != nil {
-
-			fmt.Fprintf(w, "Incorrect format for getting notes in a time period")
-
-		} else {
-
-			notes = models.GetTimePeriodNotes(timejson.Time)
-			json.NewEncoder(w).Encode(ReturnJSON{Notes: notes})
-
-		}
-
-	default:
-		http.Error(w, "Invalid request method.", 405)
-
-	}
-
-}
-
-//handler for the '/note' Path
-//Used for inserting notes and deleting notes
-func NoteHandler(w http.ResponseWriter, r *http.Request,  _ httprouter.Params) {
-
-	decoder := json.NewDecoder(r.Body)
-
-	switch r.Method {
-	case "GET":
-		fmt.Fprintf(w, "Hello world!123\n")
-	case "POST":
-		fmt.Println("Received POST to ", r.URL.Path)
-		fmt.Println("Inserting note into database")
-
-		var note models.Note
-		err := decoder.Decode(&note)
-
-		if err != nil {
-			log.Println(err)
-			fmt.Fprintf(w, "Error could not decode POST request. Possibly incorrect JSON string\n")
-			return
-		}
-
-		var id int64 = models.InsertNote(note)
-		if id == -1 {
-			fmt.Fprintf(w, "Database encountered an error. Failed to insert note.")
-			return
-		}
-		fmt.Fprintf(w, strconv.FormatInt(id, 10)+"\n")
-
-	case "DELETE":
-		var deleteID IdKey
-		err := decoder.Decode(&deleteID)
-
-		if err != nil {
-			fmt.Fprintf(w, "Incorrect format for deleting a note")
-			return
-		}
-
-		models.DeleteNote(deleteID.Id)
-
-	default:
-		http.Error(w, "Invalid request method.", 405)
-	}
-}
-
-//Handler for the '/' path
-func Handler(w http.ResponseWriter, r *http.Request,  _ httprouter.Params) {
-	switch r.Method {
-	//middle argument is HTML string
-	case "GET":
-		fmt.Fprintf(w, "Hello world!123\n")
-	case "POST":
-		fmt.Fprintf(w, "You sent a post request to \"%s\"\n", r.URL.Path)
-	default:
-		http.Error(w, "Invalid request method.", 405)
-	}
-}
-
-func UserHandler(w http.ResponseWriter, r *http.Request,  _ httprouter.Params) {
+func UserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	switch r.Method {
 
@@ -125,4 +25,129 @@ func UserHandler(w http.ResponseWriter, r *http.Request,  _ httprouter.Params) {
 
 	}
 
+}
+
+/*
+ Route: GET /api/notes/:time
+ Gets the Note with the specified id.
+*/
+func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	time := ps.ByName("time")
+
+	// TODO: Save this code for checking err from GetTimePeriodNotes
+	if time != "" {
+		msg := fmt.Sprintf("Error: Could not parse time param: %s", time)
+		logAndRespondWithError(w, msg, msg)
+		return
+	}
+
+	notes := models.GetTimePeriodNotes(time)
+	respondWithJson(w, notes, http.StatusOK)
+}
+
+/*
+ Route: GET /api/all/notes
+*/
+func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	notes := models.GetAllNotes()
+
+	respondWithJson(w, notes, http.StatusOK)
+}
+
+/*
+ Route: POST /api/notes
+ Creates a new Note with attributes from the request body given in JSON format.
+*/
+func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Decode body into Note struct
+	note := models.Note{}
+	err := json.NewDecoder(r.Body).Decode(&note)
+
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Could not decode JSON body into Note struct.",
+			err.Error(),
+		)
+		return
+	}
+
+	// Create new Note
+	// TODO: Pass note reference!
+	newId := models.InsertNote(&note)
+
+	if newId == -1 {
+		logAndRespondWithError(
+			w,
+			"Error: Could not insert Note into database.",
+			err.Error(),
+		)
+		return
+	}
+
+	// Return { id: newId } as JSON.
+	respondWithJson(w, struct{ id int64 }{newId}, http.StatusCreated)
+}
+
+/*
+ Route: DELETE /api/notes/:id
+*/
+func NotesDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	idStr := ps.ByName("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			fmt.Sprintf("Error: Could not parse id param: %s", idStr),
+			err.Error(),
+		)
+		return
+	}
+
+	err = models.DeleteNote(id)
+
+	// TODO: Test insertion of bad ID
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			fmt.Sprintf("Error: Could not delete note with id: %d", id),
+			err.Error(),
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+/*
+ Serialises the `object` and writes it to `w`, the HTTP response, with status
+ code `statusCode`.
+*/
+func respondWithJson(w http.ResponseWriter, object interface{}, statusCode int) {
+	// Set content type and status code.
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(statusCode)
+
+	// Serialise object and write to ResponseWriter.
+	err := json.NewEncoder(w).Encode(object)
+
+	// If error, return error instead.
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Failed to encode object as json",
+			err.Error(),
+		)
+	}
+}
+
+/*
+Logs the `logMsg` on the server and writes an error to the response using
+`http.Error()`, with `responseMsg` as the message and `http.StatusBadRequest` as
+the status code.
+*/
+func logAndRespondWithError(w http.ResponseWriter, logMsg string, responseMsg string) {
+	log.Println(logMsg)
+	http.Error(w, responseMsg, http.StatusBadRequest)
 }

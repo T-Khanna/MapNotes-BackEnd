@@ -2,8 +2,9 @@ package models
 
 import (
 	"database/sql"
-	_ "github.com/lib/pq"
 	"log"
+
+	_ "github.com/lib/pq"
 )
 
 type Note struct {
@@ -16,7 +17,7 @@ type Note struct {
 	Id         int
 }
 
-func InsertNote(note Note) (id int64) {
+func InsertNote(note *Note) (id int64) {
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6)")
 
 	if err != nil {
@@ -46,18 +47,21 @@ func InsertNote(note Note) (id int64) {
 }
 
 //Duplication here with DeleteUser
-func DeleteNote(id int64) {
+func DeleteNote(id int64) (err error) {
 	stmt, err := db.Prepare("DELETE FROM Notes WHERE id = $1")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// TODO: DO ERROR PROPERLY
 	_, err = stmt.Exec(id)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
 func GetTimePeriodNotes(time string) []Note {
