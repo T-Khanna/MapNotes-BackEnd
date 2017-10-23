@@ -61,26 +61,26 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Decode body into Note struct
 	note := models.Note{}
-	err := json.NewDecoder(r.Body).Decode(&note)
+	decodeErr := json.NewDecoder(r.Body).Decode(&note)
 
-	if err != nil {
+	if decodeErr != nil {
 		logAndRespondWithError(
 			w,
 			"Error: Could not decode JSON body into Note struct.",
-			err.Error(),
+			decodeErr.Error(),
 		)
 		return
 	}
 
 	// Create new Note
 	// TODO: Pass note reference!
-	newId := models.InsertNote(&note)
+	newId, createErr := models.Notes.Create(&note)
 
-	if newId == -1 {
+	if createErr != nil {
 		logAndRespondWithError(
 			w,
 			"Error: Could not insert Note into database.",
-			err.Error(),
+			createErr.Error(),
 		)
 		return
 	}
@@ -105,7 +105,7 @@ func NotesDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	err = models.DeleteNote(id)
+	err = models.Notes.Delete(id)
 
 	// TODO: Test insertion of bad ID
 	if err != nil {
