@@ -41,13 +41,13 @@ func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	notes, err := models.GetTimePeriodNotes(time)
+	notes, err := models.Notes.GetActiveAtTime(time)
 
 	if err != nil {
 		logAndRespondWithError(
 			w,
 			err.Error(),
-			fmt.Sprintf("Error: Failed to get notes from database active at time %s", time),
+			fmt.Sprintf("Error: Database failed to retrieve notes active at time %s", time),
 		)
 		return
 	}
@@ -59,7 +59,16 @@ func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params
  Route: GET /api/all/notes
 */
 func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	notes := models.GetAllNotes()
+	notes, err := models.Notes.GetAll()
+
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			err.Error(),
+			"Error: Database failed to retrieve all notes.",
+		)
+		return
+	}
 
 	respondWithJson(w, notes, http.StatusOK)
 }

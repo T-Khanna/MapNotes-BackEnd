@@ -7,6 +7,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
 	Title      string
 	Comment    string
@@ -20,8 +21,10 @@ type Note struct {
 // Possibly will be a similar struct for any future structs we perform CRUD on.
 // Refactor when the time comes.
 type NoteOperations struct {
-	Create func(note *Note) (int64, error)
-	Delete func(id int64) error
+	GetAll          func() ([]Note, error)
+	GetActiveAtTime func(string) ([]Note, error)
+	Create          func(*Note) (int64, error)
+	Delete          func(int64) error
 }
 
 // Exported API. Use as models.Notes.Create(..)
@@ -29,8 +32,10 @@ type NoteOperations struct {
 //        be named singularly. This is inconsistent and an easy to get wrong
 //        oddity of the code.
 var Notes = NoteOperations{
-	Create: createNote,
-	Delete: deleteNote,
+	GetAll:          getAllNotes,
+	GetActiveAtTime: getNotesActiveAtTime,
+	Create:          createNote,
+	Delete:          deleteNote,
 }
 
 func createNote(note *Note) (int64, error) {
@@ -74,7 +79,7 @@ func deleteNote(id int64) error {
 	return nil
 }
 
-func GetTimePeriodNotes(time string) ([]Note, error) {
+func getNotesActiveAtTime(time string) ([]Note, error) {
 	rows, err := db.Query("SELECT * FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
 
 	if err != nil {
@@ -83,19 +88,22 @@ func GetTimePeriodNotes(time string) ([]Note, error) {
 	}
 
 	defer rows.Close()
-	return ConvertResultToNotes(rows), nil
+	return convertResultToNotes(rows), nil
 }
 
-func GetAllNotes() []Note {
+func getAllNotes() ([]Note, error) {
 	rows, err := db.Query("SELECT title, comments, startTime, endTime, longitude, latitude, id FROM notes")
-	if err != nil {
-		log.Fatal(err)
-	}
 	defer rows.Close()
-	return ConvertResultToNotes(rows)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return convertResultToNotes(rows), nil
 }
 
-func ConvertResultToNotes(rows *sql.Rows) []Note {
+func convertResultToNotes(rows *sql.Rows) []Note {
 	list := make([]Note, 0)
 	for rows.Next() {
 		var n Note
