@@ -16,6 +16,7 @@ before_script:
  - rsync -a $CI_PROJECT_DIR/* $GOPATH/src/$REPO_NAME
  - export PATH=$PATH:$(go env GOPATH)/bin
  - cd $GOPATH/src/$REPO_NAME
+ - rm -rf vendor
  - go get github.com/tools/godep
  - godep restore
 
@@ -31,7 +32,7 @@ test-mapnotes:
 
 deploy-mapnotes:
   stage: deploy
-  only: 
+  only:
     - master
   script:
     - echo deploy
