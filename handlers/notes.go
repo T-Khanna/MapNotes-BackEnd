@@ -7,25 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
-
 	"github.com/julienschmidt/httprouter"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 )
-
-func UserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
-	switch r.Method {
-
-	case "GET":
-		fmt.Fprintf(w, "GET sent to /user")
-	case "POST":
-		fmt.Fprintf(w, "POST sent to /user")
-	default:
-		http.Error(w, "Invalid request method.", 405)
-
-	}
-
-}
 
 /*
  Route: GET /api/notes/:time

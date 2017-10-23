@@ -54,7 +54,8 @@ func setupRoutes(router *httprouter.Router) {
 	router.DELETE("/note", handlers.NotesDelete)
 
 	// Users
-	router.GET("/user", handlers.UserHandler)
+	router.GET("/user", handlers.UserGet)
+	router.POST("/user", handlers.UserCreate)
 }
 
 func mkHandlerWithMiddleware(router http.Handler) http.Handler {
