@@ -19,6 +19,11 @@ before_script:
  - go get github.com/tools/godep
  - godep restore
 
+cache:
+    paths:
+        - "vendor/"
+    key: "$CI_COMMIT_REF_NAME"
+
 build-mapnotes:
  stage: build
  script:
