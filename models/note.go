@@ -56,18 +56,19 @@ func createNote(note *Note) (int64, error) {
 }
 
 //Duplication here with DeleteUser
-func deleteNote(id int64) (err error) {
-	stmt, err := db.Prepare("DELETE FROM Notes WHERE id = $1")
+func deleteNote(id int64) error {
+	stmt, prepErr := db.Prepare("DELETE FROM Notes WHERE id = $1")
 
-	if err != nil {
-		log.Fatal(err)
+	if prepErr != nil {
+		log.Println(prepErr)
+		return prepErr
 	}
 
-	// TODO: DO ERROR PROPERLY
-	_, err = stmt.Exec(id)
+	_, execErr := stmt.Exec(id)
 
-	if err != nil {
-		log.Fatal(err)
+	if execErr != nil {
+		log.Println(execErr)
+		return execErr
 	}
 
 	return nil
