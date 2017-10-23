@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestInsert(t *testing.T) {
+func TestInsertNote(t *testing.T) {
 	db, mock := initMockDB(t)
 	defer db.Close()
 
@@ -62,22 +62,8 @@ func TestGetAllNotes(t *testing.T) {
 	assert.Equal(t, returnedRows[0].Id, note.Id)
 }
 
-func TestDelete(t *testing.T) {
-
-	db, mock := initMockDB(t)
-	defer db.Close()
-
-	var id int64 = 2
-	mock.ExpectPrepare("DELETE FROM Notes WHERE id = \\$1").
-		ExpectExec().
-		WithArgs(id).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	models.DeleteNote(id)
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("There were unfufilled expectations: %s", err)
-	}
-
+func TestDeleteNote(t *testing.T) {
+	testDelete("Notes", t, models.DeleteNote)
 }
 
 func TestGetTimePeriodNotes(t *testing.T) {
@@ -105,6 +91,50 @@ func TestGetTimePeriodNotes(t *testing.T) {
 	assert.Equal(t, returnedRows[0].Longitude, note.Longitude)
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
+
+}
+
+func TestInsertUser(t *testing.T) {
+	db, mock := initMockDB(t)
+	defer db.Close()
+
+	var username string = "Harry"
+	var password string = "1234"
+
+	mock.ExpectPrepare("INSERT INTO users\\(username, password\\) VALUES\\(\\$1, \\$2\\)").
+		ExpectExec().
+		WithArgs(username, password).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	rows := sqlmock.NewRows([]string{"max"}).AddRow(1)
+	mock.ExpectQuery("SELECT max\\(id\\) FROM users").WillReturnRows(rows)
+
+	models.InsertUser(models.User{Userid: -1, Username: username, Password: password})
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfufilled expectations: %s", err)
+	}
+}
+
+type DeleteFunc func(int64)
+
+func TestDeleteUser(t *testing.T) {
+	testDelete("users", t, models.DeleteUser)
+}
+
+func testDelete(tableName string, t *testing.T, deleter DeleteFunc) {
+	db, mock := initMockDB(t)
+	defer db.Close()
+
+	var id int64 = 2
+	mock.ExpectPrepare("DELETE FROM " + tableName + " WHERE id = \\$1").
+		ExpectExec().
+		WithArgs(id).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	deleter(id)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfufilled expectations: %s", err)
+	}
 
 }
 

@@ -5,7 +5,13 @@ import (
 	"log"
 )
 
-func insertUser(user User) (id int64) {
+type User struct {
+	Userid   int
+	Username string
+	Password string
+}
+
+func InsertUser(user User) (id int64) {
 
 	stmt, err := db.Prepare("INSERT INTO users(username, password) VALUES($1, $2)")
 

@@ -9,12 +9,6 @@ import (
 
 var db *sql.DB
 
-type User struct {
-	Userid   int
-	Username string
-	Password string
-}
-
 func InitDB() {
 	var err error
 	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
