@@ -2,12 +2,16 @@ package main
 
 import (
 	"fmt"
-	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/handlers"
-	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
+
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/handlers"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/middlewares"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 )
 
 func main() {
@@ -16,16 +20,12 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	//Connect to database
-	models.InitDB()
+	initDatabase()
 	fmt.Println("Connected to database.")
 
-	fmt.Println("Starting server on port", port)
-
-	//Tells the server how to handle paths that equal the first arg
 	router := initRouter()
 
-	//Starts the server at designated port
+	fmt.Println("Starting server on port", port)
 	err := http.ListenAndServe(":"+string(port), router)
 
 	if err != nil {
@@ -33,15 +33,34 @@ func main() {
 	}
 }
 
-func initRouter() http.Handler  {
-
+func initRouter() http.Handler {
 	router := httprouter.New()
 
+	setupRoutes(router)
+	routerWithMiddleware := mkHandlerWithMiddleware(router)
+
+	return routerWithMiddleware
+}
+
+func initDatabase() {
+	models.InitDB()
+}
+
+func setupRoutes(router *httprouter.Router) {
+	// Test
 	router.GET("/", handlers.Handler)
+
+	// Notes
 	router.GET("/note", handlers.NoteHandler)
 	router.GET("/allnotes", handlers.GroupNotesHandler)
+
+	// Users
 	router.GET("/user", handlers.UserHandler)
+}
 
-	return router
-
+func mkHandlerWithMiddleware(router http.Handler) http.Handler {
+	return alice.New(
+		middlewares.Logger,
+		middlewares.Timeout,
+	).Then(router)
 }
