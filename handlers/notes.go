@@ -18,7 +18,6 @@ import (
 func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	time := ps.ByName("time")
 
-	// TODO: Save this code for checking err from GetTimePeriodNotes
 	if time != "" {
 		msg := fmt.Sprintf("Error: Could not parse time param: %s", time)
 		logAndRespondWithError(w, msg, msg)
@@ -150,6 +149,7 @@ Logs the `logMsg` on the server and writes an error to the response using
 `http.Error()`, with `responseMsg` as the message and `http.StatusBadRequest` as
 the status code.
 */
+// TODO: Should we response with an { error: responseMsg } JSON? What does http.Error actually respond with?
 func logAndRespondWithError(w http.ResponseWriter, logMsg string, responseMsg string) {
 	log.Println(logMsg)
 	http.Error(w, responseMsg, http.StatusBadRequest)
