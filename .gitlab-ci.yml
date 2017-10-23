@@ -17,6 +17,8 @@ before_script:
  - export PATH=$PATH:$(go env GOPATH)/bin
  - cd $GOPATH/src/$REPO_NAME
  - rm -rf vendor
+ - rm -rf middlewares
+ - rm -rf views
  - go get github.com/tools/godep
  - godep restore
 
