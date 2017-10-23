@@ -27,7 +27,7 @@ build-mapnotes:
 test-mapnotes:
  stage: test
  script:
-   - go test
+   - go test ./tests
 
 deploy-mapnotes:
   stage: deploy
