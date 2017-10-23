@@ -7,6 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/julienschmidt/httprouter"
+
 )
 
 type TimeKey struct {
@@ -23,7 +26,7 @@ type ReturnJSON struct {
 
 //Handler for the '/allnotes' Path
 //Used to get groups of notes
-func GroupNotesHandler(w http.ResponseWriter, r *http.Request) {
+func GroupNotesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	switch r.Method {
 
@@ -53,7 +56,7 @@ func GroupNotesHandler(w http.ResponseWriter, r *http.Request) {
 
 //handler for the '/note' Path
 //Used for inserting notes and deleting notes
-func NoteHandler(w http.ResponseWriter, r *http.Request) {
+func NoteHandler(w http.ResponseWriter, r *http.Request,  _ httprouter.Params) {
 
 	decoder := json.NewDecoder(r.Body)
 
@@ -97,7 +100,7 @@ func NoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 //Handler for the '/' path
-func Handler(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request,  _ httprouter.Params) {
 	switch r.Method {
 	//middle argument is HTML string
 	case "GET":
@@ -109,7 +112,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UserHandler(w http.ResponseWriter, r *http.Request) {
+func UserHandler(w http.ResponseWriter, r *http.Request,  _ httprouter.Params) {
 
 	switch r.Method {
 
