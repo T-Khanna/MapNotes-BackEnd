@@ -31,7 +31,7 @@ func TestInsertNote(t *testing.T) {
 
 	rows := sqlmock.NewRows([]string{"max"}).AddRow(1)
 	mock.ExpectQuery("SELECT max\\(id\\) FROM notes").WillReturnRows(rows)
-	models.InsertNote(models.Note{Title: title, Comment: comment,
+	models.Notes.Create(&models.Note{Title: title, Comment: comment,
 		Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id})
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
@@ -45,7 +45,9 @@ func TestGetAllNotes(t *testing.T) {
 	rows, note := generateTestRows()
 	mock.ExpectQuery("SELECT (.+) FROM notes").
 		WillReturnRows(rows)
-	returnedRows := models.GetAllNotes()
+
+		//May need to check the err returned in the line below
+	returnedRows, _ := models.Notes.GetAll()
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
@@ -63,7 +65,7 @@ func TestGetAllNotes(t *testing.T) {
 }
 
 func TestDeleteNote(t *testing.T) {
-	testDelete("Notes", t, models.DeleteNote)
+	testDelete("Notes", t, models.Notes.Delete)
 }
 
 func TestGetTimePeriodNotes(t *testing.T) {
@@ -76,7 +78,7 @@ func TestGetTimePeriodNotes(t *testing.T) {
 	mock.ExpectQuery("SELECT \\* FROM notes WHERE \\(starttime <= \\$1 AND endtime >= \\$1\\)").
 		WithArgs("2017-01-01 00:00").
 		WillReturnRows(rows)
-	returnedRows := models.GetTimePeriodNotes("2017-01-01 00:00")
+	returnedRows, _:= models.Notes.GetActiveAtTime("2017-01-01 00:00")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
@@ -115,11 +117,13 @@ func TestInsertUser(t *testing.T) {
 	}
 }
 
-type DeleteFunc func(int64)
-
+type DeleteFunc func(int64) error
+/*
 func TestDeleteUser(t *testing.T) {
-	testDelete("users", t, models.DeleteUser)
+	testDelete("users", t, models.Notes.Delete)
 }
+
+*/
 
 func testDelete(tableName string, t *testing.T, deleter DeleteFunc) {
 	db, mock := initMockDB(t)
