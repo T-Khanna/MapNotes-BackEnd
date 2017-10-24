@@ -11,7 +11,17 @@ type User struct {
 	Password string
 }
 
-func InsertUser(user User) (id int64) {
+type UserOperations struct {
+	Create func(*User) (int64)
+	Delete func(int64)
+}
+
+var Users = UserOperations{
+	Create: createUser,
+	Delete: deleteUser,
+}
+
+func createUser(user *User) (id int64) {
 
 	stmt, err := db.Prepare("INSERT INTO users(username, password) VALUES($1, $2)")
 
@@ -41,7 +51,7 @@ func InsertUser(user User) (id int64) {
 }
 
 //Not a vital function, but here if a user did wish to delete their account
-func DeleteUser(id int64) {
+func deleteUser(id int64) {
 
 	stmt, err := db.Prepare("DELETE FROM users WHERE id = $1")
 
