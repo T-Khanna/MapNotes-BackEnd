@@ -9,14 +9,19 @@ stages:
  - deploy
 
 before_script:
+ - ls
  - sudo apt-get -y -qq install ruby-dev golang-go
  - sudo gem install dpl
+ - rm -rf $HOME/go/src/$REPO_NAME
  - mkdir -p $HOME/go/src/$REPO_NAME
  - export GOPATH=$HOME/go
+ - ls
  - rsync -a $CI_PROJECT_DIR/* $GOPATH/src/$REPO_NAME
  - export PATH=$PATH:$(go env GOPATH)/bin
  - cd $GOPATH/src/$REPO_NAME
  - go get github.com/tools/godep
+ - ls
+ - ls handlers
  - godep restore
 
 cache:
@@ -24,9 +29,12 @@ cache:
         - "vendor/"
     key: "$CI_COMMIT_REF_NAME"
 
+    
+
 build-mapnotes:
  stage: build
  script:
+   - ls
    - go install
 
 test-mapnotes:
