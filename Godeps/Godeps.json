@@ -19,17 +19,17 @@
 		},
 		{
 			"ImportPath": "github.com/justinas/alice",
-			"Rev": "1051eaf52fcafdd87ead59d28b065f1fcb8274ec"
+			"Rev": "03f45bd4b7dad4734bc4620e46a35789349abb20"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
-			"Comment": "go1.0-cutoff-183-g30d59ea",
-			"Rev": "30d59eaf01528a141f560f34f0208e0ec5218e75"
+			"Comment": "go1.0-cutoff-185-g017e4c1",
+			"Rev": "017e4c14d80628353eaee677a1aeffe47a10c0dc"
 		},
 		{
 			"ImportPath": "github.com/lib/pq/oid",
-			"Comment": "go1.0-cutoff-183-g30d59ea",
-			"Rev": "30d59eaf01528a141f560f34f0208e0ec5218e75"
+			"Comment": "go1.0-cutoff-185-g017e4c1",
+			"Rev": "017e4c14d80628353eaee677a1aeffe47a10c0dc"
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2/jws",
