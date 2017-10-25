@@ -22,23 +22,20 @@ before_script:
  - go get github.com/tools/godep
  - ls
  - ls handlers
-<<<<<<< 2dfc940f0aab94a52f01dc09170958e0e7dfe1b2
  - godep restore ./...
-=======
- - godep save
->>>>>>> Update .gitlab-ci.yml
 
 cache:
     paths:
         - "vendor/"
     key: "$CI_COMMIT_REF_NAME"
 
-    
+
 
 build-mapnotes:
  stage: build
  script:
    - ls
+   - go version
    - go install
 
 test-mapnotes:
