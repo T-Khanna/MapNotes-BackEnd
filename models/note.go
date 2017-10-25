@@ -8,13 +8,13 @@ import (
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
-	Title      string
-	Comment    string
-	Start_time string
-	End_time   string
-	Longitude  float64
-	Latitude   float64
-	Id         int
+	Title     *string  `json:"title,omitempty"`
+	Comment   *string  `json:"comment,omitempty"`
+	StartTime *string  `json:"start_time,omitempty"`
+	EndTime   *string  `json:"end_time,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Id        *int     `json:"id,omitempty"`
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
@@ -47,7 +47,7 @@ func createNote(note *Note) (int64, error) {
 
 	// Execute the INSERT statement, marshalling the returned id into an int64.
 	var id int64
-	err = stmt.QueryRow(note.Title, note.Comment, note.Start_time, note.End_time,
+	err = stmt.QueryRow(note.Title, note.Comment, note.StartTime, note.EndTime,
 		note.Longitude, note.Latitude).Scan(&id)
 
 	if err != nil {
@@ -115,7 +115,7 @@ func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 	for rows.Next() {
 		var n Note
 
-		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.Start_time, &n.End_time,
+		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.StartTime, &n.EndTime,
 			&n.Longitude, &n.Latitude)
 		if err != nil {
 			return nil, err
