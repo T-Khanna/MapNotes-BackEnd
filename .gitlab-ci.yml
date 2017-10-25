@@ -10,7 +10,7 @@ stages:
 
 before_script:
  - ls
- - sudo apt-get -y -qq install ruby-dev golang-go
+ - sudo apt-get -y -qq install ruby-dev 
  - sudo gem install dpl
  - rm -rf $HOME/go/src/$REPO_NAME
  - mkdir -p $HOME/go/src/$REPO_NAME
