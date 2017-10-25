@@ -25,14 +25,12 @@ func TestInsertNote(t *testing.T) {
 	//One to escape it in a string context, another to escape in a regex context
 
 	mock.ExpectPrepare("INSERT INTO notes\\(title, comments, startTime, endTime, longitude, latitude\\) VALUES\\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6\\)").
-		ExpectExec().
-		WithArgs(title, comment, timestamp, timestamp, longitude, latitude).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+		ExpectQuery().
+		WithArgs(title, comment, timestamp, timestamp, longitude, latitude)
 
-	rows := sqlmock.NewRows([]string{"max"}).AddRow(1)
-	mock.ExpectQuery("SELECT max\\(id\\) FROM notes").WillReturnRows(rows)
 	models.Notes.Create(&models.Note{Title: title, Comment: comment,
-		Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id})
+	Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id})
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
@@ -111,7 +109,7 @@ func TestInsertUser(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"max"}).AddRow(1)
 	mock.ExpectQuery("SELECT max\\(id\\) FROM users").WillReturnRows(rows)
 
-	models.InsertUser(models.User{Userid: -1, Username: username, Password: password})
+	models.Users.Create(&models.User{Userid: -1, Username: username, Password: password})
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
