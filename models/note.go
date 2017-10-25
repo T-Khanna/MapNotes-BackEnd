@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -64,6 +63,20 @@ func createNote(note *Note) (int64, error) {
 }
 
 func updateNote(note *Note) error {
+	/*
+	  To implement partial updates:
+
+	  The fields of the Note struct must be pointers, so that they we can
+	  distinguish when they've been ommitted from the JSON by checking if the
+	  pointer is nil.
+
+	  To dynamically construct the query based on what columns are included, uses a
+	  bunch of if statements that check if a column is present and, if so, appends
+	  "column name = $n" to the byte buffer.
+
+	  Uses a byte buffer to avoid re-concatenating strings over and over.
+	*/
+
 	if note.Id == nil {
 		return errors.New("Error: Attempting to update Note but ID not provided")
 	}
@@ -72,7 +85,15 @@ func updateNote(note *Note) error {
 	var buffer bytes.Buffer
 	buffer.WriteString("UPDATE notes SET ")
 
+	// This will be the parameter number of the column-to-update's value in the
+	// query that is constructed.. If a column needs to be updated and it's the
+	// 'numCols'th column to be added to the query, then it will become parameter
+	// '$numCols' in the query.
 	numCols := 1
+
+	// Contains the values of the columns to be added. Each time a non-nil field
+	// is found in note, that field will be appended to values and numCols
+	// incremented. Thus, values[i] will match $i in the query.
 	values := []interface{}{}
 
 	if note.Title != nil {
@@ -118,9 +139,6 @@ func updateNote(note *Note) error {
 	buffer.WriteString(fmt.Sprintf(" WHERE id = %d;", *note.Id))
 
 	query := buffer.String()
-
-	// TESTING
-	log.Println(query)
 
 	_, err := db.Exec(query, values...)
 	if err != nil {
