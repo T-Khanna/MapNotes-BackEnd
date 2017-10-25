@@ -5,7 +5,6 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
-	"fmt"
 )
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
@@ -44,7 +43,6 @@ func createNote(note *Note) (int64, error) {
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING id")
 
 	if err != nil {
-		log.Println(err)
 		return -1, err
 	}
 
@@ -54,7 +52,6 @@ func createNote(note *Note) (int64, error) {
 		note.Longitude, note.Latitude).Scan(&id)
 
 	if err != nil {
-		log.Println(err)
 		return -1, err
 	}
 
@@ -82,16 +79,19 @@ func deleteNote(id int64) error {
 
 func getNotesActiveAtTime(time string) ([]Note, error) {
 	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
-
-	fmt.Println(time)
+	defer rows.Close()
 
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
-	defer rows.Close()
-	return convertResultToNotes(rows), nil
+	notes, convErr := convertResultToNotes(rows)
+
+	if convErr != nil {
+		return nil, convErr
+	}
+
+	return notes, nil
 }
 
 func getAllNotes() ([]Note, error) {
@@ -99,25 +99,30 @@ func getAllNotes() ([]Note, error) {
 	defer rows.Close()
 
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
-	return convertResultToNotes(rows), nil
+	notes, convErr := convertResultToNotes(rows)
+
+	if convErr != nil {
+		return nil, convErr
+	}
+
+	return notes, nil
 }
 
-func convertResultToNotes(rows *sql.Rows) []Note {
+func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 	list := make([]Note, 0)
 	for rows.Next() {
 		var n Note
 
-		err := rows.Scan(&n.Comment, &n.Title,  &n.Id, &n.Start_time, &n.End_time,
+		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.Start_time, &n.End_time,
 			&n.Longitude, &n.Latitude)
 		if err != nil {
-			log.Println(err)
+			return nil, err
 		} else {
 			list = append(list, n)
 		}
 	}
-	return list
+	return list, nil
 }
