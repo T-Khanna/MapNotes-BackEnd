@@ -75,10 +75,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	// Create new Note
-	// TODO: Pass note reference!
 	newId, createErr := models.Notes.Create(&note)
-
-	fmt.Printf("---- newId returned to handler: %d\n", newId)
 
 	if createErr != nil {
 		logAndRespondWithError(
@@ -135,8 +132,6 @@ func respondWithJson(w http.ResponseWriter, object interface{}, statusCode int) 
 
 	// Serialise object and write to ResponseWriter.
 	err := json.NewEncoder(w).Encode(object)
-
-	fmt.Printf("---- object passed to responder: %+v\n", object)
 
 	// If error, return error instead.
 	if err != nil {
