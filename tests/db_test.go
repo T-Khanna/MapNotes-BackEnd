@@ -28,6 +28,7 @@ func TestInsertNote(t *testing.T) {
 		ExpectQuery().
 		WithArgs(title, comment, timestamp, timestamp, longitude, latitude)
 
+
 	models.Notes.Create(&models.Note{Title: title, Comment: comment,
 	Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id})
 
@@ -73,7 +74,7 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 	rows, note := generateTestRows()
 
-	mock.ExpectQuery("SELECT \\* FROM notes WHERE \\(starttime <= \\$1 AND endtime >= \\$1\\)").
+	mock.ExpectQuery("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes WHERE \\(starttime <= \\$1 AND endtime >= \\$1\\)").
 		WithArgs("2017-01-01 00:00").
 		WillReturnRows(rows)
 	returnedRows, _:= models.Notes.GetActiveAtTime("2017-01-01 00:00")
@@ -160,9 +161,9 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 
 	note = models.Note{title, comment, startTime, endTime, longitude, latitude, id}
 
-	rows = sqlmock.NewRows([]string{"title", "comments", "startTime", "endTime",
-		"longitude", "latitude", "id"}).
-		AddRow(title, comment, startTime, endTime, longitude, latitude, id).
-		AddRow("Harry's world", "Hi Harry", "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, 1)
+	rows = sqlmock.NewRows([]string{"comments", "title", "id", "startTime", "endTime",
+		"longitude", "latitude"}).
+		AddRow(comment, title, id, startTime, endTime, longitude, latitude).
+		AddRow("Harry's world", "Hi Harry", 1, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0)
 	return
 }

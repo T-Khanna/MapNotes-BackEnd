@@ -114,8 +114,7 @@ func convertResultToNotes(rows *sql.Rows) []Note {
 		err := rows.Scan(&n.Comment, &n.Title,  &n.Id, &n.Start_time, &n.End_time,
 			&n.Longitude, &n.Latitude)
 		if err != nil {
-			fmt.Println("efsdcsdc")
-			log.Fatal(err)
+			log.Println(err)
 		} else {
 			list = append(list, n)
 		}
