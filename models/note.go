@@ -81,10 +81,6 @@ func updateNote(note *Note) error {
 		return errors.New("Error: Attempting to update Note but ID not provided")
 	}
 
-	// Initialise buffer in which to build the query string.
-	var buffer bytes.Buffer
-	buffer.WriteString("UPDATE notes SET ")
-
 	// This will be the parameter number of the column-to-update's value in the
 	// query that is constructed.. If a column needs to be updated and it's the
 	// 'numCols'th column to be added to the query, then it will become parameter
@@ -95,6 +91,10 @@ func updateNote(note *Note) error {
 	// is found in note, that field will be appended to values and numCols
 	// incremented. Thus, values[i] will match $i in the query.
 	values := []interface{}{}
+
+	// Initialise buffer in which to build the query string.
+	var buffer bytes.Buffer
+	buffer.WriteString("UPDATE notes SET ")
 
 	if note.Title != nil {
 		buffer.WriteString(fmt.Sprintf("title = $%d, ", numCols))
@@ -132,8 +132,8 @@ func updateNote(note *Note) error {
 		values = append(values, *note.Latitude)
 	}
 
-	// For some reason, bytes.TrimSuffix does not exist, so the trailing comma
-	// cannot be removed. Instead, add a superflous id = id.
+	// FIXME: For some reason, bytes.TrimSuffix does not exist, so the trailing
+	// comma cannot be removed. Instead, add a superflous 'id = id'.
 	buffer.WriteString(fmt.Sprintf("id = %d", *note.Id))
 
 	buffer.WriteString(fmt.Sprintf(" WHERE id = %d;", *note.Id))
@@ -141,11 +141,8 @@ func updateNote(note *Note) error {
 	query := buffer.String()
 
 	_, err := db.Exec(query, values...)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 //Duplication here with DeleteUser
