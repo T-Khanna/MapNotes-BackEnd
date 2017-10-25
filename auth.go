@@ -17,31 +17,31 @@ Function takes a token and verifies the integrity of the token given
 After verification, it returns a user struct with the relevant information
 from the token
 */
-func authToken(token string) (models.User) {
+func AuthToken(token string) (models.User) {
 
-	service, err := oauth2.New(client)
-	tokenInfoCall := service.Tokeninfo()
+  service, err := oauth2.New(client)
+  tokenInfoCall := service.Tokeninfo()
 
   // Sets parameter of IdToken to token in tokenInfoCall
-	tokenInfoCall.IdToken(token)
+  tokenInfoCall.IdToken(token)
+  tokenInfo, err := tokenInfoCall.Do()
 
-	tokenInfo, err := tokenInfoCall.Do()
   if err != nil {
-			 log.Fatal(err.Error())
-	 }
+    log.Fatal(err.Error())
+  }
 
-	//Get User Id from tokenInfo
-	id_string := tokenInfo.UserId
+  //Get User Id from tokenInfo
+  id_string := tokenInfo.UserId
 
-	//Converts string to int
-	id, err := strconv.Atoi(id_string)
+  //Converts string to int
+  id, err := strconv.Atoi(id_string)
 
-	// Get User email from tokenInfo
-	email := tokenInfo.Email
+  // Get User email from tokenInfo
+  email := tokenInfo.Email
 
-	//Fill User struct
-	user := models.User{Userid: id, Username: email, Password: ""}
+  //Fill User struct'
+  user := models.User{Userid: id, Username: email, Password: ""}
 
-	return user
+  return user
 
 }
