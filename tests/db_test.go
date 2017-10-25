@@ -2,12 +2,13 @@ package tests
 
 import (
 	"database/sql"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/vjeantet/jodaTime"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
-	"testing"
-	"time"
 )
 
 func TestInsertNote(t *testing.T) {
@@ -28,9 +29,8 @@ func TestInsertNote(t *testing.T) {
 		ExpectQuery().
 		WithArgs(title, comment, timestamp, timestamp, longitude, latitude)
 
-
-	models.Notes.Create(&models.Note{Title: title, Comment: comment,
-	Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id})
+	models.Notes.Create(&models.Note{Title: &title, Comment: &comment,
+		StartTime: &timestamp, EndTime: &timestamp, Longitude: &longitude, Latitude: &latitude, Id: &id})
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
@@ -56,8 +56,8 @@ func TestGetAllNotes(t *testing.T) {
 
 	assert.Equal(t, returnedRows[0].Title, note.Title)
 	assert.Equal(t, returnedRows[0].Comment, note.Comment)
-	assert.Equal(t, returnedRows[0].Start_time, note.Start_time)
-	assert.Equal(t, returnedRows[0].End_time, note.End_time)
+	assert.Equal(t, returnedRows[0].StartTime, note.StartTime)
+	assert.Equal(t, returnedRows[0].EndTime, note.EndTime)
 	assert.Equal(t, returnedRows[0].Longitude, note.Longitude)
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
@@ -77,7 +77,7 @@ func TestGetTimePeriodNotes(t *testing.T) {
 	mock.ExpectQuery("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes WHERE \\(starttime <= \\$1 AND endtime >= \\$1\\)").
 		WithArgs("2017-01-01 00:00").
 		WillReturnRows(rows)
-	returnedRows, _:= models.Notes.GetActiveAtTime("2017-01-01 00:00")
+	returnedRows, _ := models.Notes.GetActiveAtTime("2017-01-01 00:00")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
@@ -87,8 +87,8 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 	assert.Equal(t, returnedRows[0].Title, note.Title)
 	assert.Equal(t, returnedRows[0].Comment, note.Comment)
-	assert.Equal(t, returnedRows[0].Start_time, note.Start_time)
-	assert.Equal(t, returnedRows[0].End_time, note.End_time)
+	assert.Equal(t, returnedRows[0].StartTime, note.StartTime)
+	assert.Equal(t, returnedRows[0].EndTime, note.EndTime)
 	assert.Equal(t, returnedRows[0].Longitude, note.Longitude)
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
@@ -117,6 +117,7 @@ func TestInsertUser(t *testing.T) {
 }
 
 type DeleteFunc func(int64) error
+
 /*
 func TestDeleteUser(t *testing.T) {
 	testDelete("users", t, models.Notes.Delete)
@@ -159,7 +160,7 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	var latitude float64 = 2.0
 	var id int = 1
 
-	note = models.Note{title, comment, startTime, endTime, longitude, latitude, id}
+	note = models.Note{&title, &comment, &startTime, &endTime, &longitude, &latitude, &id}
 
 	rows = sqlmock.NewRows([]string{"comments", "title", "id", "startTime", "endTime",
 		"longitude", "latitude"}).
