@@ -48,14 +48,14 @@ func initDatabase() {
 
 func setupRoutes(router *httprouter.Router) {
 	// Notes
-	router.GET("/note/:time", handlers.NotesGetByTime)
-	router.GET("/allnotes", handlers.NotesGetAll)
-	router.POST("/note", handlers.NotesCreate)
-	router.DELETE("/note/:id", handlers.NotesDelete)
+	router.GET("/api/notes/:time", handlers.NotesGetByTime)
+	router.GET("/api/all/notes", handlers.NotesGetAll)
+	router.POST("/api/notes", handlers.NotesCreate)
+	router.DELETE("/api/notes/:id", handlers.NotesDelete)
 
 	// Users
-	router.GET("/user", handlers.UserGet)
-	router.POST("/user", handlers.UserCreate)
+	router.GET("/api/users", handlers.UserGet)
+	router.POST("/api/users", handlers.UserCreate)
 }
 
 func mkHandlerWithMiddleware(router http.Handler) http.Handler {
