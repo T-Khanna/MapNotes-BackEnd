@@ -51,7 +51,7 @@ func setupRoutes(router *httprouter.Router) {
 	router.GET("/note/:time", handlers.NotesGetByTime)
 	router.GET("/allnotes", handlers.NotesGetAll)
 	router.POST("/note", handlers.NotesCreate)
-	router.DELETE("/note", handlers.NotesDelete)
+	router.DELETE("/note/:id", handlers.NotesDelete)
 
 	// Users
 	router.GET("/user", handlers.UserGet)
