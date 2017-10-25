@@ -152,15 +152,23 @@ func initMockDB(t *testing.T) (db *sql.DB, mock sqlmock.Sqlmock) {
 }
 
 func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
-	var title string = "testing title"
-	var comment string = "testing comments"
-	var startTime string = "2017-01-01 00:00"
-	var endTime string = "2017-05-05 00:00"
-	var longitude float64 = 1.0
-	var latitude float64 = 2.0
-	var id int = 1
+	title := "testing title"
+	comment := "testing comments"
+	startTime := "2017-01-01 00:00"
+	endTime := "2017-05-05 00:00"
+	longitude := 1.0
+	latitude := 2.0
+	id := 1
 
-	note = models.Note{&title, &comment, &startTime, &endTime, &longitude, &latitude, &id}
+	note = models.Note{
+		Title:     &title,
+		Comment:   &comment,
+		StartTime: &startTime,
+		EndTime:   &endTime,
+		Longitude: &longitude,
+		Latitude:  &latitude,
+		Id:        &id,
+	}
 
 	rows = sqlmock.NewRows([]string{"comments", "title", "id", "startTime", "endTime",
 		"longitude", "latitude"}).
