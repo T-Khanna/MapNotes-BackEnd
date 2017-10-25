@@ -5,6 +5,7 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
+	"fmt"
 )
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
@@ -80,7 +81,9 @@ func deleteNote(id int64) error {
 }
 
 func getNotesActiveAtTime(time string) ([]Note, error) {
-	rows, err := db.Query("SELECT * FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
+	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
+
+	fmt.Println(time)
 
 	if err != nil {
 		log.Println(err)
@@ -92,7 +95,7 @@ func getNotesActiveAtTime(time string) ([]Note, error) {
 }
 
 func getAllNotes() ([]Note, error) {
-	rows, err := db.Query("SELECT title, comments, startTime, endTime, longitude, latitude, id FROM notes")
+	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes")
 	defer rows.Close()
 
 	if err != nil {
@@ -107,9 +110,11 @@ func convertResultToNotes(rows *sql.Rows) []Note {
 	list := make([]Note, 0)
 	for rows.Next() {
 		var n Note
-		err := rows.Scan(&n.Title, &n.Comment, &n.Start_time, &n.End_time,
-			&n.Longitude, &n.Latitude, &n.Id)
+
+		err := rows.Scan(&n.Comment, &n.Title,  &n.Id, &n.Start_time, &n.End_time,
+			&n.Longitude, &n.Latitude)
 		if err != nil {
+			fmt.Println("efsdcsdc")
 			log.Fatal(err)
 		} else {
 			list = append(list, n)

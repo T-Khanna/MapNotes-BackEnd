@@ -18,7 +18,7 @@ import (
 func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	time := ps.ByName("time")
 
-	if time != "" {
+	if time == "" {
 		msg := fmt.Sprintf("Error: Could not parse time param: %s", time)
 		logAndRespondWithError(w, msg, msg)
 		return
