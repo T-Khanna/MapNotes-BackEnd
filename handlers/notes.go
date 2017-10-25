@@ -78,6 +78,8 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO: Pass note reference!
 	newId, createErr := models.Notes.Create(&note)
 
+	fmt.Printf("---- newId returned to handler: %d\n", newId)
+
 	if createErr != nil {
 		logAndRespondWithError(
 			w,
@@ -88,7 +90,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	// Return { id: newId } as JSON.
-	respondWithJson(w, struct{ id int64 }{newId}, http.StatusCreated)
+	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
 }
 
 /*
@@ -133,6 +135,8 @@ func respondWithJson(w http.ResponseWriter, object interface{}, statusCode int) 
 
 	// Serialise object and write to ResponseWriter.
 	err := json.NewEncoder(w).Encode(object)
+
+	fmt.Printf("---- object passed to responder: %+v\n", object)
 
 	// If error, return error instead.
 	if err != nil {
