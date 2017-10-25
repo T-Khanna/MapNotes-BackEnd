@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -63,14 +62,12 @@ func deleteNote(id int64) error {
 	stmt, prepErr := db.Prepare("DELETE FROM Notes WHERE id = $1")
 
 	if prepErr != nil {
-		log.Println(prepErr)
 		return prepErr
 	}
 
 	_, execErr := stmt.Exec(id)
 
 	if execErr != nil {
-		log.Println(execErr)
 		return execErr
 	}
 
@@ -79,11 +76,12 @@ func deleteNote(id int64) error {
 
 func getNotesActiveAtTime(time string) ([]Note, error) {
 	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
-	defer rows.Close()
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	notes, convErr := convertResultToNotes(rows)
 
@@ -96,11 +94,12 @@ func getNotesActiveAtTime(time string) ([]Note, error) {
 
 func getAllNotes() ([]Note, error) {
 	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes")
-	defer rows.Close()
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	notes, convErr := convertResultToNotes(rows)
 
