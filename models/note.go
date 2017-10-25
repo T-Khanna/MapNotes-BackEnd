@@ -1,7 +1,11 @@
 package models
 
 import (
+	"bytes"
 	"database/sql"
+	"errors"
+	"fmt"
+	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -55,6 +59,50 @@ func createNote(note *Note) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func updateNote(note *Note) error {
+	if note.Id == nil {
+		return errors.New("Error: Attempting to update Note but ID not provided.")
+	}
+
+	// Initialise buffer in which to build the query string.
+	var buffer bytes.Buffer
+	buffer.WriteString("UPDATE notes SET ")
+
+	if note.Title != nil {
+		buffer.WriteString(fmt.Sprintf("title = %s,", *note.Title))
+	}
+
+	if note.Comment != nil {
+		buffer.WriteString(fmt.Sprintf("comment = %s,", *note.Comment))
+	}
+
+	if note.StartTime != nil {
+		buffer.WriteString(fmt.Sprintf("startTime = %s,", *note.StartTime))
+	}
+
+	if note.EndTime != nil {
+		buffer.WriteString(fmt.Sprintf("endTime = %s,", *note.EndTime))
+	}
+
+	if note.Longitude != nil {
+		buffer.WriteString(fmt.Sprintf("Longitude = %f,", *note.Longitude))
+	}
+
+	if note.Latitude != nil {
+		buffer.WriteString(fmt.Sprintf("Latitude = %f,", *note.Latitude))
+	}
+
+	// For some reason, bytes.TrimSuffix does not exist, so the trailing comma
+	// cannot be removed. Instead, add a superflous id = id.
+	buffer.WriteString(fmt.Sprintf("id = %d", *note.Id))
+
+	buffer.WriteString(fmt.Sprintf(" WHERE id = %d;", note.Id))
+
+	log.Println(buffer.String())
+
+	return nil
 }
 
 //Duplication here with DeleteUser
