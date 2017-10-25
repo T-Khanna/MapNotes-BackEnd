@@ -4,6 +4,10 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
+			"ImportPath": "github.com/futurenda/google-auth-id-token-verifier",
+			"Rev": "2a5b89f28b7e414a23e04fdf768f14740a4ec2ed"
+		},
+		{
 			"ImportPath": "github.com/gorilla/handlers",
 			"Comment": "v1.2.1-1-ga4d79d4",
 			"Rev": "a4d79d4487c2430a17d9dc8a1f74d1a6ed6908ca"
@@ -28,28 +32,8 @@
 			"Rev": "30d59eaf01528a141f560f34f0208e0ec5218e75"
 		},
 		{
-			"ImportPath": "golang.org/x/net/context",
-			"Rev": "4b14673ba32bee7f5ac0f990a48f033919fd418b"
-		},
-		{
-			"ImportPath": "golang.org/x/net/context/ctxhttp",
-			"Rev": "4b14673ba32bee7f5ac0f990a48f033919fd418b"
-		},
-		{
-			"ImportPath": "google.golang.org/api/gensupport",
-			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
-		},
-		{
-			"ImportPath": "google.golang.org/api/googleapi",
-			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
-		},
-		{
-			"ImportPath": "google.golang.org/api/googleapi/internal/uritemplates",
-			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
-		},
-		{
-			"ImportPath": "google.golang.org/api/oauth2/v2",
-			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
+			"ImportPath": "golang.org/x/oauth2/jws",
+			"Rev": "bb50c06baba3d0c76f9d125c0719093e315b5b44"
 		}
 	]
 }

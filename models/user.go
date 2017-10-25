@@ -6,14 +6,12 @@ import (
 )
 
 type User struct {
-	Userid   int
-	Username string
-	Password string
+	Email string
 }
 
 type UserOperations struct {
 	Create func(*User) (int64)
-	Delete func(int64)
+	Delete func(string)
 }
 
 var Users = UserOperations{
@@ -23,14 +21,14 @@ var Users = UserOperations{
 
 func createUser(user *User) (id int64) {
 
-	stmt, err := db.Prepare("INSERT INTO users(username, password) VALUES($1, $2)")
+	stmt, err := db.Prepare("INSERT INTO users(email) VALUES($1)")
 
 	if err != nil {
 		log.Println(err)
 		return -1
 	}
 
-	_, err = stmt.Exec(user.Username, user.Password)
+	_, err = stmt.Exec(user.Email)
 
 	if err != nil {
 		log.Fatal(err)
@@ -51,15 +49,15 @@ func createUser(user *User) (id int64) {
 }
 
 //Not a vital function, but here if a user did wish to delete their account
-func deleteUser(id int64) {
+func deleteUser(email string) {
 
-	stmt, err := db.Prepare("DELETE FROM users WHERE id = $1")
+	stmt, err := db.Prepare("DELETE FROM users WHERE email = $1")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = stmt.Exec(id)
+	_, err = stmt.Exec(email)
 
 	if err != nil {
 		log.Fatal(err)

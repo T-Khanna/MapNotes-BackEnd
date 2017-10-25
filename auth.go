@@ -1,16 +1,11 @@
 package main
 
 import (
-  "net/http"
   "log"
-  "strconv"
 
-  "google.golang.org/api/oauth2/v2"
+  "github.com/futurenda/google-auth-id-token-verifier"
   "gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
-
 )
-var client = &http.Client{}
-
 
 /*
 Function takes a token and verifies the integrity of the token given
@@ -19,29 +14,28 @@ from the token
 */
 func AuthToken(token string) (models.User) {
 
-  service, err := oauth2.New(client)
-  tokenInfoCall := service.Tokeninfo()
+  verify := googleAuthIDTokenVerifier.Verifier{}
+  aud := "xxxxxx-yyyyyyy.apps.googleusercontent.com"
 
-  // Sets parameter of IdToken to token in tokenInfoCall
-  tokenInfoCall.IdToken(token)
-  tokenInfo, err := tokenInfoCall.Do()
+  err := verify.VerifyIDToken(token, []string{aud,})
 
   if err != nil {
-    log.Fatal(err.Error())
+    log.Println(err.Error())
+    return models.User{Email: ""}
   }
 
-  //Get User Id from tokenInfo
-  id_string := tokenInfo.UserId
+  claimSet, err := googleAuthIDTokenVerifier.Decode(token)
 
-  //Converts string to int
-  id, err := strconv.Atoi(id_string)
+  if err != nil {
+    log.Println(err.Error())
+    return models.User{Email: ""}
+  }
 
-  // Get User email from tokenInfo
-  email := tokenInfo.Email
+  // Get User email from claimSet
+  email := claimSet.Email
 
-  //Fill User struct'
-  user := models.User{Userid: id, Username: email, Password: ""}
+  //Fill User struct
+  user := models.User{Email: email}
 
   return user
-
 }
