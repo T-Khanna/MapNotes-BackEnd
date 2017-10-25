@@ -95,26 +95,26 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 }
 
-func TestInsertUser(t *testing.T) {
+/*func TestInsertUser(t *testing.T) {
 	db, mock := initMockDB(t)
 	defer db.Close()
 
-	var username string = "Harry"
-	var password string = "1234"
+	var email string = "harry@beans.uk"
 
-	mock.ExpectPrepare("INSERT INTO users\\(username, password\\) VALUES\\(\\$1, \\$2\\)").
+	mock.ExpectPrepare("INSERT INTO users\\(email\\) VALUES\\(\\$1)").
 		ExpectExec().
-		WithArgs(username, password).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+		WithArgs(email).
+		WillReturnResult(sqlmock.NewResult(1,1))
 
 	rows := sqlmock.NewRows([]string{"max"}).AddRow(1)
 	mock.ExpectQuery("SELECT max\\(id\\) FROM users").WillReturnRows(rows)
 
-	models.Users.Create(&models.User{Userid: -1, Username: username, Password: password})
+	models.Users.Create(&models.User{Email: email})
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
 }
+*/
 
 type DeleteFunc func(int64) error
 /*
