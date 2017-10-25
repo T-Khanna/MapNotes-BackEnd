@@ -27,6 +27,7 @@ type NoteOperations struct {
 	GetAll          func() ([]Note, error)
 	GetActiveAtTime func(string) ([]Note, error)
 	Create          func(*Note) (int64, error)
+	Update          func(*Note) error
 	Delete          func(int64) error
 }
 
@@ -38,6 +39,7 @@ var Notes = NoteOperations{
 	GetAll:          getAllNotes,
 	GetActiveAtTime: getNotesActiveAtTime,
 	Create:          createNote,
+	Update:          updateNote,
 	Delete:          deleteNote,
 }
 
@@ -63,44 +65,67 @@ func createNote(note *Note) (int64, error) {
 
 func updateNote(note *Note) error {
 	if note.Id == nil {
-		return errors.New("Error: Attempting to update Note but ID not provided.")
+		return errors.New("Error: Attempting to update Note but ID not provided")
 	}
 
 	// Initialise buffer in which to build the query string.
 	var buffer bytes.Buffer
 	buffer.WriteString("UPDATE notes SET ")
 
+	numCols := 1
+	values := []interface{}{}
+
 	if note.Title != nil {
-		buffer.WriteString(fmt.Sprintf("title = %s,", *note.Title))
+		buffer.WriteString(fmt.Sprintf("title = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Title)
 	}
 
 	if note.Comment != nil {
-		buffer.WriteString(fmt.Sprintf("comment = %s,", *note.Comment))
+		buffer.WriteString(fmt.Sprintf("comments = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Comment)
 	}
 
 	if note.StartTime != nil {
-		buffer.WriteString(fmt.Sprintf("startTime = %s,", *note.StartTime))
+		buffer.WriteString(fmt.Sprintf("startTime = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.StartTime)
 	}
 
 	if note.EndTime != nil {
-		buffer.WriteString(fmt.Sprintf("endTime = %s,", *note.EndTime))
+		buffer.WriteString(fmt.Sprintf("endTime = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.EndTime)
 	}
 
 	if note.Longitude != nil {
-		buffer.WriteString(fmt.Sprintf("Longitude = %f,", *note.Longitude))
+		buffer.WriteString(fmt.Sprintf("Longitude = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Longitude)
 	}
 
 	if note.Latitude != nil {
-		buffer.WriteString(fmt.Sprintf("Latitude = %f,", *note.Latitude))
+		buffer.WriteString(fmt.Sprintf("Latitude = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Latitude)
 	}
 
 	// For some reason, bytes.TrimSuffix does not exist, so the trailing comma
 	// cannot be removed. Instead, add a superflous id = id.
 	buffer.WriteString(fmt.Sprintf("id = %d", *note.Id))
 
-	buffer.WriteString(fmt.Sprintf(" WHERE id = %d;", note.Id))
+	buffer.WriteString(fmt.Sprintf(" WHERE id = %d;", *note.Id))
 
-	log.Println(buffer.String())
+	query := buffer.String()
+
+	// TESTING
+	log.Println(query)
+
+	_, err := db.Exec(query, values...)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
