@@ -2,15 +2,7 @@
 	"ImportPath": "gitlab.doc.ic.ac.uk/g1736215/MapNotes",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
-		{
-			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Comment": "v1.1.0-9-gecdeabc",
-			"Rev": "ecdeabc65495df2dec95d7c4a4c3e021903035e5"
-		},
 		{
 			"ImportPath": "github.com/gorilla/handlers",
 			"Comment": "v1.2.1-1-ga4d79d4",
@@ -36,23 +28,28 @@
 			"Rev": "30d59eaf01528a141f560f34f0208e0ec5218e75"
 		},
 		{
-			"ImportPath": "github.com/pmezard/go-difflib/difflib",
-			"Comment": "v1.0.0",
-			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "4b14673ba32bee7f5ac0f990a48f033919fd418b"
 		},
 		{
-			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.1.4-71-g890a5c3",
-			"Rev": "890a5c3458b43e6104ff5da8dfa139d013d77544"
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "4b14673ba32bee7f5ac0f990a48f033919fd418b"
 		},
 		{
-			"ImportPath": "github.com/vjeantet/jodaTime",
-			"Rev": "be924ce213fb35f66c810b61e051965eb78b82d0"
+			"ImportPath": "google.golang.org/api/gensupport",
+			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
 		},
 		{
-			"ImportPath": "gopkg.in/DATA-DOG/go-sqlmock.v1",
-			"Comment": "v1.3.0",
-			"Rev": "d76b18b42f285b792bf985118980ce9eacea9d10"
+			"ImportPath": "google.golang.org/api/googleapi",
+			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi/internal/uritemplates",
+			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
+		},
+		{
+			"ImportPath": "google.golang.org/api/oauth2/v2",
+			"Rev": "52fedcc3d56e51c5f1a571d48092238ab2746c73"
 		}
 	]
 }
