@@ -35,7 +35,7 @@ func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	respondWithJson(w, notes, http.StatusOK)
+	respondWithJson(w, struct{Notes []models.Note}{notes}, http.StatusOK)
 }
 
 /*
@@ -53,7 +53,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	respondWithJson(w, notes, http.StatusOK)
+	respondWithJson(w, struct{Notes []models.Note}{notes}, http.StatusOK)
 }
 
 /*
