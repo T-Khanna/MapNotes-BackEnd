@@ -15,7 +15,7 @@ from the token
 func AuthToken(token string) (isAuthenticated bool, user models.User) {
 
  verify := googleAuthIDTokenVerifier.Verifier{}
- aud := "xxxxxx-yyyyyyy.apps.googleusercontent.com"
+ aud := "371478445903-l0qtjdbu45ci2bobb5lhm41svvcbjc0u.apps.googleusercontent.com"
 
  isAuthenticated = false
 
