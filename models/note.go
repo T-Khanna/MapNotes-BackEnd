@@ -15,6 +15,7 @@ type Note struct {
 	Longitude  float64
 	Latitude   float64
 	Id         int
+	User_email string
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
@@ -39,7 +40,7 @@ var Notes = NoteOperations{
 
 func createNote(note *Note) (int64, error) {
 	// Prepare sql that inserts the note and returns the new id.
-	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING id")
+	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude, user_email) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id")
 
 	if err != nil {
 		return -1, err
@@ -48,7 +49,7 @@ func createNote(note *Note) (int64, error) {
 	// Execute the INSERT statement, marshalling the returned id into an int64.
 	var id int64
 	err = stmt.QueryRow(note.Title, note.Comment, note.Start_time, note.End_time,
-		note.Longitude, note.Latitude).Scan(&id)
+		note.Longitude, note.Latitude, note.User_email).Scan(&id)
 
 	if err != nil {
 		return -1, err
