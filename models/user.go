@@ -6,14 +6,13 @@ import (
 )
 
 type User struct {
-	Userid   int
+	Email string
 	Username string
-	Password string
 }
 
 type UserOperations struct {
-	Create func(*User) (int64)
-	Delete func(int64)
+	Create func(*User) bool
+	Delete func(string) bool
 }
 
 var Users = UserOperations{
@@ -21,47 +20,42 @@ var Users = UserOperations{
 	Delete: deleteUser,
 }
 
-func createUser(user *User) (id int64) {
+func createUser(user *User) (wasCreated bool) {
 
-	stmt, err := db.Prepare("INSERT INTO users(username, password) VALUES($1, $2)")
+	stmt, err := db.Prepare("INSERT INTO users(email, username) VALUES($1, $2)")
 
 	if err != nil {
 		log.Println(err)
-		return -1
+		return false
 	}
 
-	_, err = stmt.Exec(user.Username, user.Password)
+	_, err = stmt.Exec(user.Email, user.Username)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return false
 	}
 
-	rows, err := db.Query("SELECT max(id) FROM users")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for rows.Next() {
-		err = rows.Scan(&id)
-	}
-
-	return
+	return true
 
 }
 
 //Not a vital function, but here if a user did wish to delete their account
-func deleteUser(id int64) {
+func deleteUser(email string) bool {
 
-	stmt, err := db.Prepare("DELETE FROM users WHERE id = $1")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = stmt.Exec(id)
+	stmt, err := db.Prepare("DELETE FROM users WHERE email = $1")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return false
 	}
+
+	_, err = stmt.Exec(email)
+
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return true
 }
