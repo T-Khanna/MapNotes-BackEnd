@@ -91,6 +91,39 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 /*
+ Route: PUT /api/notes
+ Creates a new Note with attributes from the request body given in JSON format.
+*/
+func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Decode body into Note struct
+	note := models.Note{}
+	decodeErr := json.NewDecoder(r.Body).Decode(&note)
+
+	if decodeErr != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Could not decode JSON body into Note struct.",
+			decodeErr.Error(),
+		)
+		return
+	}
+
+	// Create new Note
+	updateErr := models.Notes.Update(&note)
+
+	if updateErr != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Could not update note.",
+			updateErr.Error(),
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+/*
  Route: DELETE /api/notes/:id
 */
 func NotesDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -149,7 +182,7 @@ Logs the `logMsg` on the server and writes an error to the response using
 the status code.
 */
 // TODO: Should we response with an { error: responseMsg } JSON? What does http.Error actually respond with?
-func logAndRespondWithError(w http.ResponseWriter, logMsg string, responseMsg string) {
+func logAndRespondWithError(w http.ResponseWriter, responseMsg string, logMsg string) {
 	log.Println(logMsg)
 	http.Error(w, responseMsg, http.StatusBadRequest)
 }

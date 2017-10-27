@@ -1,21 +1,24 @@
 package models
 
 import (
+	"bytes"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	_ "github.com/lib/pq"
 )
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
-	Title      string
-	Comment    string
-	Start_time string
-	End_time   string
-	Longitude  float64
-	Latitude   float64
-	Id         int
-	User_email string
+	Title      *string  `json:"title,omitempty"`
+	Comment    *string  `json:"comment,omitempty"`
+	StartTime  *string  `json:"start_time,omitempty"`
+	EndTime    *string  `json:"end_time,omitempty"`
+	Longitude  *float64 `json:"longitude,omitempty"`
+	Latitude   *float64 `json:"latitude,omitempty"`
+	Id         *int     `json:"id,omitempty"`
+  User_email *string  `json:"user_email,omitempty"`
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
@@ -24,6 +27,7 @@ type NoteOperations struct {
 	GetAll          func() ([]Note, error)
 	GetActiveAtTime func(string) ([]Note, error)
 	Create          func(*Note) (int64, error)
+	Update          func(*Note) error
 	Delete          func(int64) error
 }
 
@@ -35,6 +39,7 @@ var Notes = NoteOperations{
 	GetAll:          getAllNotes,
 	GetActiveAtTime: getNotesActiveAtTime,
 	Create:          createNote,
+	Update:          updateNote,
 	Delete:          deleteNote,
 }
 
@@ -48,7 +53,7 @@ func createNote(note *Note) (int64, error) {
 
 	// Execute the INSERT statement, marshalling the returned id into an int64.
 	var id int64
-	err = stmt.QueryRow(note.Title, note.Comment, note.Start_time, note.End_time,
+	err = stmt.QueryRow(note.Title, note.Comment, note.StartTime, note.EndTime,
 		note.Longitude, note.Latitude, note.User_email).Scan(&id)
 
 	if err != nil {
@@ -56,6 +61,89 @@ func createNote(note *Note) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func updateNote(note *Note) error {
+	/*
+	  To implement partial updates:
+
+	  The fields of the Note struct must be pointers, so that they we can
+	  distinguish when they've been ommitted from the JSON by checking if the
+	  pointer is nil.
+
+	  To dynamically construct the query based on what columns are included, uses a
+	  bunch of if statements that check if a column is present and, if so, appends
+	  "column name = $n" to the byte buffer.
+
+	  Uses a byte buffer to avoid re-concatenating strings over and over.
+	*/
+
+	if note.Id == nil {
+		return errors.New("Error: Attempting to update Note but ID not provided")
+	}
+
+	// This will be the parameter number of the column-to-update's value in the
+	// query that is constructed.. If a column needs to be updated and it's the
+	// 'numCols'th column to be added to the query, then it will become parameter
+	// '$numCols' in the query.
+	numCols := 1
+
+	// Contains the values of the columns to be added. Each time a non-nil field
+	// is found in note, that field will be appended to values and numCols
+	// incremented. Thus, values[i] will match $i in the query.
+	values := []interface{}{}
+
+	// Initialise buffer in which to build the query string.
+	var buffer bytes.Buffer
+	buffer.WriteString("UPDATE notes SET ")
+
+	if note.Title != nil {
+		buffer.WriteString(fmt.Sprintf("title = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Title)
+	}
+
+	if note.Comment != nil {
+		buffer.WriteString(fmt.Sprintf("comments = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Comment)
+	}
+
+	if note.StartTime != nil {
+		buffer.WriteString(fmt.Sprintf("startTime = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.StartTime)
+	}
+
+	if note.EndTime != nil {
+		buffer.WriteString(fmt.Sprintf("endTime = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.EndTime)
+	}
+
+	if note.Longitude != nil {
+		buffer.WriteString(fmt.Sprintf("Longitude = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Longitude)
+	}
+
+	if note.Latitude != nil {
+		buffer.WriteString(fmt.Sprintf("Latitude = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Latitude)
+	}
+
+	// FIXME: For some reason, bytes.TrimSuffix does not exist, so the trailing
+	// comma cannot be removed. Instead, add a superflous 'id = id'.
+	buffer.WriteString(fmt.Sprintf("id = %d", *note.Id))
+
+	buffer.WriteString(fmt.Sprintf(" WHERE id = %d;", *note.Id))
+
+	query := buffer.String()
+
+	_, err := db.Exec(query, values...)
+
+	return err
 }
 
 //Duplication here with DeleteUser
@@ -116,7 +204,7 @@ func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 	for rows.Next() {
 		var n Note
 
-		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.Start_time, &n.End_time,
+		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.StartTime, &n.EndTime,
 			&n.Longitude, &n.Latitude, &n.User_email)
 		if err != nil {
 			return nil, err

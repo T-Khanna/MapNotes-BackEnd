@@ -31,8 +31,8 @@ func TestInsertNote(t *testing.T) {
 		WithArgs(title, comment, timestamp, timestamp, longitude, latitude, email)
 
 
-	models.Notes.Create(&models.Note{Title: title, Comment: comment,
-	Start_time: timestamp, End_time: timestamp, Longitude: longitude, Latitude: latitude, Id: id, User_email:email})
+	models.Notes.Create(&models.Note{Title: &title, Comment: &comment,
+	StartTime: &timestamp, EndTime: &timestamp, Longitude: &longitude, Latitude: &latitude, Id: &id, User_email: &email})
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
@@ -58,8 +58,8 @@ func TestGetAllNotes(t *testing.T) {
 
 	assert.Equal(t, returnedRows[0].Title, note.Title)
 	assert.Equal(t, returnedRows[0].Comment, note.Comment)
-	assert.Equal(t, returnedRows[0].Start_time, note.Start_time)
-	assert.Equal(t, returnedRows[0].End_time, note.End_time)
+	assert.Equal(t, returnedRows[0].StartTime, note.StartTime)
+	assert.Equal(t, returnedRows[0].EndTime, note.EndTime)
 	assert.Equal(t, returnedRows[0].Longitude, note.Longitude)
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
@@ -90,8 +90,8 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 	assert.Equal(t, returnedRows[0].Title, note.Title)
 	assert.Equal(t, returnedRows[0].Comment, note.Comment)
-	assert.Equal(t, returnedRows[0].Start_time, note.Start_time)
-	assert.Equal(t, returnedRows[0].End_time, note.End_time)
+	assert.Equal(t, returnedRows[0].StartTime, note.StartTime)
+	assert.Equal(t, returnedRows[0].EndTime, note.EndTime)
 	assert.Equal(t, returnedRows[0].Longitude, note.Longitude)
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
@@ -153,16 +153,25 @@ func initMockDB(t *testing.T) (db *sql.DB, mock sqlmock.Sqlmock) {
 }
 
 func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
-	var title string = "testing title"
-	var comment string = "testing comments"
-	var startTime string = "2017-01-01 00:00"
-	var endTime string = "2017-05-05 00:00"
-	var longitude float64 = 1.0
-	var latitude float64 = 2.0
-	var id int = 1
-	var email string = "test@mapnotes.co.uk"
+	title := "testing title"
+	comment := "testing comments"
+	startTime := "2017-01-01 00:00"
+	endTime := "2017-05-05 00:00"
+	longitude := 1.0
+	latitude := 2.0
+	id := 1
+  email := "test@mapnotes.co.uk"
 
-	note = models.Note{title, comment, startTime, endTime, longitude, latitude, id, email}
+	note = models.Note{
+		Title:      &title,
+		Comment:    &comment,
+		StartTime:  &startTime,
+		EndTime:    &endTime,
+		Longitude:  &longitude,
+		Latitude:   &latitude,
+		Id:         &id,
+    User_email: &email,
+	}
 
 	rows = sqlmock.NewRows([]string{"comments", "title", "id", "startTime", "endTime",
 		"longitude", "latitude", "user_email"}).
