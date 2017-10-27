@@ -9,6 +9,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
+	validation "gitlab.doc.ic.ac.uk/g1736215/MapNotes/validation"
 )
 
 /*
@@ -35,7 +36,7 @@ func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	respondWithJson(w, struct{Notes []models.Note}{notes}, http.StatusOK)
+	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
 }
 
 /*
@@ -53,7 +54,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	respondWithJson(w, struct{Notes []models.Note}{notes}, http.StatusOK)
+	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
 }
 
 /*
@@ -72,6 +73,17 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			decodeErr.Error(),
 		)
 		return
+	}
+
+	if !(validation.ValidateNoteRequest(&note)) {
+
+		logAndRespondWithError(
+			w,
+			"Error: Note could not be validated.",
+			"nil",
+		)
+		return
+
 	}
 
 	// Create new Note
