@@ -76,7 +76,7 @@ func deleteNote(id int64) error {
 }
 
 func getNotesActiveAtTime(time string) ([]Note, error) {
-	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
+	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude, user_email FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
 
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func getNotesActiveAtTime(time string) ([]Note, error) {
 }
 
 func getAllNotes() ([]Note, error) {
-	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude FROM notes")
+	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude, user_email FROM notes")
 
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 		var n Note
 
 		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.Start_time, &n.End_time,
-			&n.Longitude, &n.Latitude)
+			&n.Longitude, &n.Latitude, &n.User_email)
 		if err != nil {
 			return nil, err
 		} else {
