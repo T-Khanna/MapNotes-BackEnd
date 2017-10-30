@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+  "log"
 	"net/http"
   "context"
   "gitlab.doc.ic.ac.uk/g1736215/MapNotes/auth"
@@ -14,6 +15,7 @@ type UserContextKey struct {}
 func Authenticate(h http.Handler) http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
     token := r.Header.Get("login_token")
+    log.Println(token)
 		isAuthenticated, user := auth.AuthToken(token)
 		//isAuthenticated = true
     if (!isAuthenticated) {
