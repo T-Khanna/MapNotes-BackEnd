@@ -9,6 +9,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
+	validation "gitlab.doc.ic.ac.uk/g1736215/MapNotes/validation"
 )
 
 /*
@@ -35,7 +36,7 @@ func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	respondWithJson(w, struct{Notes []models.Note}{notes}, http.StatusOK)
+	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
 }
 
 /*
@@ -53,7 +54,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	respondWithJson(w, struct{Notes []models.Note}{notes}, http.StatusOK)
+	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
 }
 
 /*
@@ -74,6 +75,17 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	if !(validation.ValidateNoteRequest(&note)) {
+
+		logAndRespondWithError(
+			w,
+			"Error: Note could not be validated.",
+			"nil",
+		)
+		return
+
+	}
+
 	// Create new Note
 	newId, createErr := models.Notes.Create(&note)
 
@@ -88,6 +100,39 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
+}
+
+/*
+ Route: PUT /api/notes
+ Creates a new Note with attributes from the request body given in JSON format.
+*/
+func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Decode body into Note struct
+	note := models.Note{}
+	decodeErr := json.NewDecoder(r.Body).Decode(&note)
+
+	if decodeErr != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Could not decode JSON body into Note struct.",
+			decodeErr.Error(),
+		)
+		return
+	}
+
+	// Create new Note
+	updateErr := models.Notes.Update(&note)
+
+	if updateErr != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Could not update note.",
+			updateErr.Error(),
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 /*
@@ -149,7 +194,7 @@ Logs the `logMsg` on the server and writes an error to the response using
 the status code.
 */
 // TODO: Should we response with an { error: responseMsg } JSON? What does http.Error actually respond with?
-func logAndRespondWithError(w http.ResponseWriter, logMsg string, responseMsg string) {
+func logAndRespondWithError(w http.ResponseWriter, responseMsg string, logMsg string) {
 	log.Println(logMsg)
 	http.Error(w, responseMsg, http.StatusBadRequest)
 }

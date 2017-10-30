@@ -50,6 +50,7 @@ func setupRoutes(router *httprouter.Router) {
 	// Notes
 	router.GET("/api/notes/:time", handlers.NotesGetByTime)
 	router.GET("/api/all/notes", handlers.NotesGetAll)
+	router.PUT("/api/notes", handlers.NotesUpdate)
 	router.POST("/api/notes", handlers.NotesCreate)
 	router.DELETE("/api/notes/:id", handlers.NotesDelete)
 
