@@ -104,15 +104,14 @@ func TestInsertUser(t *testing.T) {
 	db, mock := initMockDB(t)
 	defer db.Close()
 
-	var username string = "Harry"
 	var email string = "user@email.com"
 
-	mock.ExpectPrepare("INSERT INTO users\\(email, username\\) VALUES\\(\\$1, \\$2\\)").
+	mock.ExpectPrepare("INSERT INTO users\\(email\\) VALUES\\(\\$1\\)").
 		ExpectExec().
-		WithArgs(email, username).
+		WithArgs(email).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	models.Users.Create(&models.User{Username: username, Email: email})
+	models.Users.Create(&models.User{Email: email})
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}

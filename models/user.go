@@ -21,14 +21,14 @@ var Users = UserOperations{
 
 func createUser(user *User) (wasCreated bool) {
 
-	stmt, err := db.Prepare("INSERT INTO users(email, username) VALUES($1, $2)")
+	stmt, err := db.Prepare("INSERT INTO users(email) VALUES($1)")
 
 	if err != nil {
 		log.Println(err)
 		return false
 	}
 
-	_, err = stmt.Exec(user.Email, user.Username)
+	_, err = stmt.Exec(user.Email)
 
 	if err != nil {
 		log.Println(err)
