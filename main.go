@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-
+	
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 
@@ -52,6 +52,7 @@ func setupRoutes(router *httprouter.Router) {
 	router.GET("/api/all/notes", handlers.NotesGetAll)
 	router.POST("/api/notes", handlers.NotesCreate)
 	router.DELETE("/api/notes/:id", handlers.NotesDelete)
+
 
 	// Users
 	router.GET("/api/users", handlers.UserGet)

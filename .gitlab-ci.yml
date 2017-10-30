@@ -29,12 +29,13 @@ cache:
         - "vendor/"
     key: "$CI_COMMIT_REF_NAME"
 
-    
+
 
 build-mapnotes:
  stage: build
  script:
    - ls
+   - go version
    - go install
 
 test-mapnotes:
