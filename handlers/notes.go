@@ -25,6 +25,7 @@ func decodeNoteStruct(r *http.Request) (error, *models.Note) {
   if note.User_email == nil {
     return errors.New("Error: Could not retrieve email"), nil
   }
+  log.Println(note.User_email)
   return nil, &note
 }
 
@@ -70,6 +71,8 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+  log.Println(r.Context().Value(middlewares.UserContextKey{}))
+
 	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
 }
 
@@ -79,8 +82,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 */
 func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Decode body into Note struct
-	note := models.Note{}
-	decodeErr := json.NewDecoder(r.Body).Decode(&note)
+	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
@@ -91,7 +93,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if !(validation.ValidateNoteRequest(&note)) {
+	if !(validation.ValidateNoteRequest(note)) {
 
 		logAndRespondWithError(
 			w,
@@ -103,7 +105,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	// Create new Note
-	newId, createErr := models.Notes.Create(&note)
+	newId, createErr := models.Notes.Create(note)
 
 	if createErr != nil {
 		logAndRespondWithError(
@@ -124,8 +126,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 */
 func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Decode body into Note struct
-	note := models.Note{}
-	decodeErr := json.NewDecoder(r.Body).Decode(&note)
+	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
@@ -137,7 +138,7 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	// Create new Note
-	updateErr := models.Notes.Update(&note)
+	updateErr := models.Notes.Update(note)
 
 	if updateErr != nil {
 		logAndRespondWithError(
