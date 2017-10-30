@@ -64,5 +64,6 @@ func mkHandlerWithMiddleware(router http.Handler) http.Handler {
 	return alice.New(
 		middlewares.Logger,
 		middlewares.Timeout,
+		middlewares.Authenticate,
 	).Then(router)
 }
