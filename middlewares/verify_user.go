@@ -1,13 +1,13 @@
 package middlewares
 
 import (
-  "log"
+	"context"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/auth"
+	"log"
 	"net/http"
-  "context"
-  "gitlab.doc.ic.ac.uk/g1736215/MapNotes/auth"
 )
 
-type UserContextKey struct {}
+type UserContextKey struct{}
 
 /*
  Middleware that authenticates token before calling subsequent HTTP requests.
@@ -25,5 +25,5 @@ func Authenticate(h http.Handler) http.Handler {
     ctx := context.WithValue(r.Context(), UserContextKey{}, user.Email)
     rWithUser := r.WithContext(ctx)
 		h.ServeHTTP(w, rWithUser)
-  })
+	})
 }

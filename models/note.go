@@ -11,14 +11,15 @@ import (
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
-	Title      *string  `json:"title,omitempty"`
-	Comment    *string  `json:"comment,omitempty"`
-	StartTime  *string  `json:"start_time,omitempty"`
-	EndTime    *string  `json:"end_time,omitempty"`
-	Longitude  *float64 `json:"longitude,omitempty"`
-	Latitude   *float64 `json:"latitude,omitempty"`
-	Id         *int     `json:"id,omitempty"`
-  User_email *string  `json:"user_email,omitempty"`
+	Title      *string   `json:"title,omitempty"`
+	Comment    *string   `json:"comment,omitempty"`
+	StartTime  *string   `json:"start_time,omitempty"`
+	EndTime    *string   `json:"end_time,omitempty"`
+	Longitude  *float64  `json:"longitude,omitempty"`
+	Latitude   *float64  `json:"latitude,omitempty"`
+	Id         *int      `json:"id,omitempty"`
+	User_email *string   `json:"user_email,omitempty"`
+	Tags       *[]string `json:"tags,omitempty"`
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
@@ -131,6 +132,12 @@ func updateNote(note *Note) error {
 		buffer.WriteString(fmt.Sprintf("Latitude = $%d, ", numCols))
 		numCols++
 		values = append(values, *note.Latitude)
+	}
+
+	if note.Tags != nil {
+		buffer.WriteString(fmt.Sprintf("Tags = $%d, ", numCols))
+		numCols++
+		values = append(values, *note.Tags)
 	}
 
 	// FIXME: For some reason, bytes.TrimSuffix does not exist, so the trailing
