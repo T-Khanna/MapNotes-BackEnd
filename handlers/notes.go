@@ -2,31 +2,30 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-  "errors"
 
 	"github.com/julienschmidt/httprouter"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/middlewares"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	validation "gitlab.doc.ic.ac.uk/g1736215/MapNotes/validation"
-	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/middlewares"
 )
 
 func decodeNoteStruct(r *http.Request) (error, *models.Note) {
-  var note models.Note
+	var note models.Note
 	decodeErr := json.NewDecoder(r.Body).Decode(&note)
-  if decodeErr != nil {
-    return decodeErr, nil
-  }
-  email := r.Context().Value(middlewares.UserContextKey{}).(string)
-  note.User_email = &email
-  if note.User_email == nil {
-    return errors.New("Error: Could not retrieve email"), nil
-  }
-  log.Println(note.User_email)
-  return nil, &note
+	if decodeErr != nil {
+		return decodeErr, nil
+	}
+	email := r.Context().Value(middlewares.UserContextKey{}).(string)
+	note.User_email = &email
+	if note.User_email == nil {
+		return errors.New("Error: Could not retrieve email"), nil
+	}
+	return nil, &note
 }
 
 /*
@@ -71,7 +70,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-  log.Println(r.Context().Value(middlewares.UserContextKey{}))
+	log.Println(r.Context().Value(middlewares.UserContextKey{}))
 
 	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
 }
