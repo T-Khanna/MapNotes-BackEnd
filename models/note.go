@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+  "log"
 
 	_ "github.com/lib/pq"
 )
@@ -171,7 +172,13 @@ func deleteNote(id int64) error {
 }
 
 func getNotesActiveAtTime(time string) ([]Note, error) {
-	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude, user_email FROM notes WHERE (starttime <= $1 AND endtime >= $1) ", time)
+	rows, err := db.Query(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
+                         FROM notes as n
+                         LEFT JOIN notestags as nt
+                         ON n.id = nt.note_id
+                         LEFT JOIN tags as t
+                         ON t.id = nt.tag_id
+                         WHERE (starttime <= $1 AND endtime >= $1)`)
 
 	if err != nil {
 		return nil, err
@@ -189,7 +196,12 @@ func getNotesActiveAtTime(time string) ([]Note, error) {
 }
 
 func getAllNotes() ([]Note, error) {
-	rows, err := db.Query("SELECT comments, title, id, startTime, endTime, longitude, latitude, user_email FROM notes")
+	rows, err := db.Query(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
+                         FROM notes as n
+                         LEFT JOIN notestags as nt
+                         ON n.id = nt.note_id
+                         LEFT JOIN tags as t
+                         ON t.id = nt.tag_id`)
 
 	if err != nil {
 		return nil, err
@@ -206,17 +218,40 @@ func getAllNotes() ([]Note, error) {
 	return notes, nil
 }
 
+func printNote(n Note) {
+  log.Println("Printing note...")
+  log.Println(*n.Title     )
+  log.Println(*n.Comment   )
+  log.Println(*n.StartTime )
+  log.Println(*n.EndTime   )
+  log.Println(*n.Longitude )
+  log.Println(*n.Latitude  )
+  log.Println(*n.Id        )
+  log.Println(*n.User_email)
+}
+
 func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 	list := make([]Note, 0)
-	for rows.Next() {
+	var fstNote *Note = nil
+  for rows.Next() {
 		var n Note
-
+    var t *string
 		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.StartTime, &n.EndTime,
-			&n.Longitude, &n.Latitude, &n.User_email)
+			&n.Longitude, &n.Latitude, &n.User_email, &t)
+    tagarr := make([]string, 0)
+    n.Tags = &tagarr
+    if t != nil {
+      *n.Tags = append(*n.Tags, *t)
+    }
 		if err != nil {
 			return nil, err
-		} else {
-			list = append(list, n)
+		} else if fstNote == nil {
+      fstNote = &n
+    } else if *(*fstNote).Id == *n.Id {
+      *fstNote.Tags = append(*fstNote.Tags, *t)
+    } else {
+			list = append(list, *fstNote)
+      fstNote = &n
 		}
 	}
 	return list, nil
