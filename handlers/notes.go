@@ -83,6 +83,8 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Decode body into Note struct
 	decodeErr, note := decodeNoteStruct(r)
 
+	log.Println("check")
+
 	if decodeErr != nil {
 		logAndRespondWithError(
 			w,
