@@ -8,6 +8,7 @@ import (
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 	"testing"
 	"time"
+	"log"
 )
 
 func TestInsertNote(t *testing.T) {
@@ -48,12 +49,17 @@ func TestGetAllNotes(t *testing.T) {
 		WillReturnRows(rows)
 
 		//May need to check the err returned in the line below
-	returnedRows, _ := models.Notes.GetAll()
-	if err := mock.ExpectationsWereMet(); err != nil {
+	returnedRows, err := models.Notes.GetAll()
+  log.Println("Wdfsdzvsddefdfsdvsdvsdvsxdv");
+	log.Println(returnedRows)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if err = mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
 	if len(returnedRows) != 2 {
-		t.Errorf("Function did not return correct number of rows")
+		t.Errorf("Function did not return correct number of rows. Returned %d rows", len(returnedRows))
 	}
 
 	assert.Equal(t, returnedRows[0].Title, note.Title)
@@ -160,6 +166,7 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	latitude := 2.0
 	id := 1
   email := "test@mapnotes.co.uk"
+	tags := []string{"Harry", "Beans"}
 
 	note = models.Note{
 		Title:      &title,
@@ -170,11 +177,12 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 		Latitude:   &latitude,
 		Id:         &id,
     User_email: &email,
+		Tags:       &tags,
 	}
 
 	rows = sqlmock.NewRows([]string{"comments", "title", "id", "startTime", "endTime",
-		"longitude", "latitude", "user_email"}).
-		AddRow(comment, title, id, startTime, endTime, longitude, latitude, email).
-		AddRow("Harry's world", "Hi Harry", 1, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, "hello@mail.com")
+		"longitude", "latitude", "user_email", "tag"}).
+		AddRow(comment, title, id, startTime, endTime, longitude, latitude, email, "Harry").
+		AddRow("Harry's world", "Hi Harry", 1, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, "hello@mail.com", "Beans")
 	return
 }
