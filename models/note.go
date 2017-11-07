@@ -52,6 +52,32 @@ func createNote(note *Note) (int64, error) {
 		return -1, err
 	}
 
+	// Get tags from note and insert each tag in database
+	tags := note.Tags
+	note_id := note.Id
+	for _, t := range *tags {
+		tag := Tag{Title: t, Id : -1}
+		tag_id, err := createTag(&tag)
+		if err != nil {
+			return -1, err
+		}
+
+		// Prepare sql that inserts note_id and tag_id into notes_tag table
+	  stmt_notetag, err := db.Prepare("INSERT INTO notestags(note_id, tag_id) VALUES($1, $2)")
+
+		if err != nil {
+			return -1, err
+		}
+
+    // Execute the INSERT statement
+		_, err = stmt_notetag.Exec(note_id, tag_id)
+
+		if err != nil {
+			return -1, err
+		}
+
+	}
+
 	// Execute the INSERT statement, marshalling the returned id into an int64.
 	var id int64
 	err = stmt.QueryRow(note.Title, note.Comment, note.StartTime, note.EndTime,
