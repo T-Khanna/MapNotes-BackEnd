@@ -80,8 +80,13 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 	rows, note := generateTestRows()
 
-	//mock.ExpectQuery(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag FROM notes as n LEFT JOIN notestags as nt ON n.id = nt.note_id LEFT JOIN tags as t on t.id = nt.tag_id WHERE \(starttime <= \$1 AND endtime >= \$1\)`).
-	mock.ExpectQuery("(.)+").
+	mock.ExpectQuery(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
+										FROM notes as n
+										LEFT JOIN notestags as nt
+										ON n.id = nt.note_id
+										LEFT JOIN tags as t
+										ON t.id = nt.tag_id
+										WHERE \(starttime <= (.)+ AND endtime >= (.)+\)`).
 		WillReturnRows(rows)
 	returnedRows, _ := models.Notes.GetActiveAtTime("2017-01-01 00:00")
 	if err := mock.ExpectationsWereMet(); err != nil {
