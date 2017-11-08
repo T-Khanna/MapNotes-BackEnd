@@ -266,7 +266,9 @@ func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 			fstNote = &n
 		}
 	}
-	list = append(list, *fstNote)
+  if fstNote != nil {
+	  list = append(list, *fstNote)
+  }
 	log.Println(len(list))
 	return list, nil
 }

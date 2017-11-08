@@ -29,8 +29,36 @@ func decodeNoteStruct(r *http.Request) (error, *models.Note) {
 }
 
 /*
- Route: GET /api/notes/:time1
- Gets the Note with the specified id.
+ Route: GET /api/notes/user/:user_email
+ Gets the Note with the specified user email
+*/
+func NotesGetByUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	user_email := ps.ByName("user_email")
+
+	if user_email == "" {
+		msg := fmt.Sprintf("Error: Could not parse user_email param: %s", user_email)
+		logAndRespondWithError(w, msg, msg)
+		return
+	}
+
+	notes, err := models.Notes.GetByUser(user_email)
+
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			err.Error(),
+			fmt.Sprintf("Error: Database failed to retrieve notes active at user_email %s", user_email),
+		)
+		return
+	}
+
+	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
+}
+
+
+/*
+ Route: GET /api/notes/time/:time
+ Gets the Note with the specified time.
 */
 func NotesGetByTime(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	time := ps.ByName("time")
