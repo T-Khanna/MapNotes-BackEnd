@@ -16,6 +16,7 @@ func Authenticate(h http.Handler) http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
     token := r.Header.Get("login_token")
     log.Println(token)
+		//isAuthenticated, user := auth.AuthToken(token)
 		isAuthenticated, _ := auth.AuthToken(token)
 		//later change underscore back to user
 		isAuthenticated = true
