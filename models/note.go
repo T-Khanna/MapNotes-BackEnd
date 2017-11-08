@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-  "log"
+	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -189,9 +189,10 @@ func getNotesActiveAtTime(time string) ([]Note, error) {
 	notes, convErr := convertResultToNotes(rows)
 
 	if convErr != nil {
+		log.Println("There was an error")
 		return nil, convErr
 	}
-
+	log.Println(len(notes))
 	return notes, nil
 }
 
@@ -219,40 +220,46 @@ func getAllNotes() ([]Note, error) {
 }
 
 func printNote(n Note) {
-  log.Println("Printing note...")
-  log.Println(*n.Title     )
-  log.Println(*n.Comment   )
-  log.Println(*n.StartTime )
-  log.Println(*n.EndTime   )
-  log.Println(*n.Longitude )
-  log.Println(*n.Latitude  )
-  log.Println(*n.Id        )
-  log.Println(*n.User_email)
+	log.Println("Printing note...")
+	log.Println(*n.Title)
+	log.Println(*n.Comment)
+	log.Println(*n.StartTime)
+	log.Println(*n.EndTime)
+	log.Println(*n.Longitude)
+	log.Println(*n.Latitude)
+	log.Println(*n.Id)
+	log.Println(*n.User_email)
 }
 
 func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
+	log.Println("Entered conversion")
 	list := make([]Note, 0)
 	var fstNote *Note = nil
-  for rows.Next() {
+	for rows.Next() {
+		log.Println("Entered loop")
 		var n Note
-    var t *string
+		var t *string
 		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.StartTime, &n.EndTime,
 			&n.Longitude, &n.Latitude, &n.User_email, &t)
-    tagarr := make([]string, 0)
-    n.Tags = &tagarr
-    if t != nil {
-      *n.Tags = append(*n.Tags, *t)
-    }
 		if err != nil {
 			return nil, err
-		} else if fstNote == nil {
-      fstNote = &n
-    } else if *(*fstNote).Id == *n.Id {
-      *fstNote.Tags = append(*fstNote.Tags, *t)
-    } else {
+		}
+		tagarr := make([]string, 0)
+		n.Tags = &tagarr
+		if t != nil {
+			*n.Tags = append(*n.Tags, *t)
+		}
+		if fstNote == nil {
+			fstNote = &n
+		} else if *(*fstNote).Id == *n.Id {
+			*fstNote.Tags = append(*fstNote.Tags, *t)
+		} else {
+			log.Println("appending to list")
 			list = append(list, *fstNote)
-      fstNote = &n
+			fstNote = &n
 		}
 	}
+	list = append(list, *fstNote)
+	log.Println(len(list))
 	return list, nil
 }

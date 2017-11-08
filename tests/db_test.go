@@ -6,9 +6,9 @@ import (
 	"github.com/vjeantet/jodaTime"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
+	//"log"
 	"testing"
 	"time"
-	"log"
 )
 
 func TestInsertNote(t *testing.T) {
@@ -31,9 +31,8 @@ func TestInsertNote(t *testing.T) {
 		ExpectQuery().
 		WithArgs(title, comment, timestamp, timestamp, longitude, latitude, email)
 
-
 	models.Notes.Create(&models.Note{Title: &title, Comment: &comment,
-	StartTime: &timestamp, EndTime: &timestamp, Longitude: &longitude, Latitude: &latitude, Id: &id, User_email: &email})
+		StartTime: &timestamp, EndTime: &timestamp, Longitude: &longitude, Latitude: &latitude, Id: &id, User_email: &email})
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
@@ -45,13 +44,11 @@ func TestGetAllNotes(t *testing.T) {
 	defer db.Close()
 
 	rows, note := generateTestRows()
-	mock.ExpectQuery("SELECT (.+) FROM notes").
+	mock.ExpectQuery("SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag FROM notes").
 		WillReturnRows(rows)
 
-		//May need to check the err returned in the line below
+	//May need to check the err returned in the line below
 	returnedRows, err := models.Notes.GetAll()
-  log.Println("Wdfsdzvsddefdfsdvsdvsdvsxdv");
-	log.Println(returnedRows)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -83,15 +80,17 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 	rows, note := generateTestRows()
 
-	mock.ExpectQuery("SELECT comments, title, id, startTime, endTime, longitude, latitude, user_email FROM notes WHERE \\(starttime <= \\$1 AND endtime >= \\$1\\)").
+	//mock.ExpectQuery(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag FROM notes as n LEFT JOIN notestags as nt ON n.id = nt.note_id LEFT JOIN tags as t on t.id = nt.tag_id WHERE \(starttime <= \$1 AND endtime >= \$1\)`).
+	mock.ExpectQuery("(.)+").
 		WithArgs("2017-01-01 00:00").
 		WillReturnRows(rows)
-	returnedRows, _:= models.Notes.GetActiveAtTime("2017-01-01 00:00")
+	returnedRows, _ := models.Notes.GetActiveAtTime("2017-01-01 00:00")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
 	if len(returnedRows) != 2 {
-		t.Errorf("Function did not return correct number of rows")
+		t.Errorf("Function did not return correct number of rows. Returned %d rows", len(returnedRows))
+		return
 	}
 
 	assert.Equal(t, returnedRows[0].Title, note.Title)
@@ -102,7 +101,6 @@ func TestGetTimePeriodNotes(t *testing.T) {
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
 	assert.Equal(t, returnedRows[0].User_email, note.User_email)
-
 
 }
 
@@ -124,6 +122,7 @@ func TestInsertUser(t *testing.T) {
 }
 
 type DeleteFunc func(int64) error
+
 /*
 func TestDeleteUser(t *testing.T) {
 	testDelete("users", t, models.Notes.Delete)
@@ -165,7 +164,7 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	longitude := 1.0
 	latitude := 2.0
 	id := 1
-  email := "test@mapnotes.co.uk"
+	email := "test@mapnotes.co.uk"
 	tags := []string{"Harry", "Beans"}
 
 	note = models.Note{
@@ -176,13 +175,13 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 		Longitude:  &longitude,
 		Latitude:   &latitude,
 		Id:         &id,
-    User_email: &email,
+		User_email: &email,
 		Tags:       &tags,
 	}
 
-	rows = sqlmock.NewRows([]string{"comments", "title", "id", "startTime", "endTime",
+	rows = sqlmock.NewRows([]string{"comments", "title", "n.id", "startTime", "endTime",
 		"longitude", "latitude", "user_email", "tag"}).
 		AddRow(comment, title, id, startTime, endTime, longitude, latitude, email, "Harry").
-		AddRow("Harry's world", "Hi Harry", 1, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, "hello@mail.com", "Beans")
+		AddRow("Harry's world", "Hi Harry", 2, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, "hello@mail.com", "Beans")
 	return
 }
