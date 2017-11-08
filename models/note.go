@@ -172,19 +172,29 @@ func deleteNote(id int64) error {
 }
 
 func getNotesActiveAtTime(time string) ([]Note, error) {
+
+	log.Println("hello")
 	rows, err := db.Query(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
                          FROM notes as n
                          LEFT JOIN notestags as nt
                          ON n.id = nt.note_id
                          LEFT JOIN tags as t
                          ON t.id = nt.tag_id
-                         WHERE (starttime <= $1 AND endtime >= $1)`)
+                         WHERE (starttime <= $1 AND endtime >= $1)`, time)
+
+	log.Println("hello2")
+
 
 	if err != nil {
+		log.Println("hello3")
+
 		return nil, err
 	}
 
 	defer rows.Close()
+
+  log.Println("dsfnosdfkjasfhasdfbaslduiofkvb")
+	log.Println(rows)
 
 	notes, convErr := convertResultToNotes(rows)
 
