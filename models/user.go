@@ -3,6 +3,7 @@ package models
 import (
 	_ "github.com/lib/pq"
 	"log"
+	"sync"
 
 )
 
@@ -10,7 +11,14 @@ type User struct {
 	Email string
 }
 
-var user_map map[string]int64
+type SynchronisedMap struct {
+
+	sync.RWMutex
+	usermap map[string]int64
+
+}
+
+var user_map_sync =  SynchronisedMap{usermap: make(map[string]int64)}
 
 
 type UserOperations struct {
@@ -25,7 +33,9 @@ var Users = UserOperations{
 
 func checkUserMap(email string) (exists bool, id int64) {
 
-id, exists = user_map[email]
+user_map_sync.RLock()
+id, exists = user_map_sync.usermap[email]
+user_map_sync.Unlock()
 
 return
 
@@ -33,7 +43,9 @@ return
 
 func insertUserMap(email string, id int64) {
 
-	user_map[email] = id
+  user_map_sync.Lock()
+	user_map_sync.usermap[email] = id
+	user_map_sync.Unlock()
 
 }
 
