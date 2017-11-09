@@ -28,6 +28,7 @@ type Note struct {
 type NoteOperations struct {
 	GetAll          func() ([]Note, error)
 	GetActiveAtTime func(string) ([]Note, error)
+  GetByUser       func(string) ([]Note, error)
 	Create          func(*Note) (int64, error)
 	Update          func(*Note) error
 	Delete          func(int64) error
@@ -40,6 +41,7 @@ type NoteOperations struct {
 var Notes = NoteOperations{
 	GetAll:          getAllNotes,
 	GetActiveAtTime: getNotesActiveAtTime,
+  GetByUser:       getNotesActiveByUser,
 	Create:          createNote,
 	Update:          updateNote,
 	Delete:          deleteNote,
@@ -183,18 +185,17 @@ func deleteNote(id int64) error {
 	return nil
 }
 
-func getNotesActiveAtTime(time string) ([]Note, error) {
+func filterNotes(filter string) ([]Note, error) {
+	query := fmt.Sprintf(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
+                        FROM notes as n
+                        LEFT JOIN notestags as nt
+                        ON n.id = nt.note_id
+                        LEFT JOIN tags as t
+                        ON t.id = nt.tag_id %s`, filter)
 
-	rows, err := db.Query(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
-                         FROM notes as n
-                         LEFT JOIN notestags as nt
-                         ON n.id = nt.note_id
-                         LEFT JOIN tags as t
-                         ON t.id = nt.tag_id
-                         WHERE (starttime <= $1 AND endtime >= $1)`, time)
+  rows, err := db.Query(query)
 
 	if err != nil {
-
 		return nil, err
 	}
 
@@ -203,34 +204,26 @@ func getNotesActiveAtTime(time string) ([]Note, error) {
 	notes, convErr := convertResultToNotes(rows)
 
 	if convErr != nil {
-		log.Println("There was an error when converting  the rows to notes")
 		return nil, convErr
 	}
-	log.Println(len(notes))
+
 	return notes, nil
 }
 
+func getNotesActiveByUser(userEmail string) ([]Note, error) {
+  s := fmt.Sprintf("WHERE user_email = '%s'", userEmail)
+  log.Println(s)
+  return filterNotes(s)
+}
+
+func getNotesActiveAtTime(time string) ([]Note, error) {
+  s := fmt.Sprintf("WHERE (starttime <= '%[1]s' AND endtime >= '%[1]s')", time)
+  log.Println(s)
+  return filterNotes(s)
+}
+
 func getAllNotes() ([]Note, error) {
-	rows, err := db.Query(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
-                         FROM notes as n
-                         LEFT JOIN notestags as nt
-                         ON n.id = nt.note_id
-                         LEFT JOIN tags as t
-                         ON t.id = nt.tag_id`)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	notes, convErr := convertResultToNotes(rows)
-
-	if convErr != nil {
-		return nil, convErr
-	}
-
-	return notes, nil
+  return filterNotes("")
 }
 
 func printNote(n Note) {
@@ -273,7 +266,9 @@ func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 			fstNote = &n
 		}
 	}
-	list = append(list, *fstNote)
+  if fstNote != nil {
+	  list = append(list, *fstNote)
+  }
 	log.Println(len(list))
 	return list, nil
 }

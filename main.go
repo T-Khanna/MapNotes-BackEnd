@@ -48,7 +48,8 @@ func initDatabase() {
 
 func setupRoutes(router *httprouter.Router) {
 	// Notes
-	router.GET("/api/notes/:time", handlers.NotesGetByTime)
+  router.GET("/api/notes/time/:time", handlers.NotesGetByTime)
+  router.GET("/api/notes/user/:user_email", handlers.NotesGetByUser)
 	router.GET("/api/all/notes", handlers.NotesGetAll)
 	router.PUT("/api/notes", handlers.NotesUpdate)
 	router.POST("/api/notes", handlers.NotesCreate)
