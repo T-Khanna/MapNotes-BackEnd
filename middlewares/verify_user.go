@@ -13,19 +13,19 @@ type UserContextKey struct{}
  Middleware that authenticates token before calling subsequent HTTP requests.
 */
 func Authenticate(h http.Handler) http.Handler {
-	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
-    token := r.Header.Get("login_token")
-    log.Println(token)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("login_token")
+		log.Println(token)
 		//isAuthenticated, user := auth.AuthToken(token)
 		isAuthenticated, _ := auth.AuthToken(token)
-		//later change underscore back to user
 		isAuthenticated = true
-    if (!isAuthenticated) {
+		if !isAuthenticated {
 			http.Error(w, "Token unauthenticated", http.StatusUnauthorized)
 			return
-    }
-    ctx := context.WithValue(r.Context(), UserContextKey{}, "beans@email.classic")
-    rWithUser := r.WithContext(ctx)
+		}
+		ctx := context.WithValue(r.Context(), UserContextKey{}, "beans@email.classic")
+		//ctx := context.WithValue(r.Context(), UserContextKey{}, user.Email)
+		rWithUser := r.WithContext(ctx)
 		h.ServeHTTP(w, rWithUser)
 	})
 }

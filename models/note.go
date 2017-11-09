@@ -12,15 +12,15 @@ import (
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
-	Title      *string   `json:"title,omitempty"`
-	Comment    *string   `json:"comment,omitempty"`
-	StartTime  *string   `json:"start_time,omitempty"`
-	EndTime    *string   `json:"end_time,omitempty"`
-	Longitude  *float64  `json:"longitude,omitempty"`
-	Latitude   *float64  `json:"latitude,omitempty"`
-	Id         *int      `json:"id,omitempty"`
-	User_email *string   `json:"user_email,omitempty"`
-	Tags       *[]string `json:"tags,omitempty"`
+	Title     *string   `json:"title,omitempty"`
+	Comment   *string   `json:"comment,omitempty"`
+	StartTime *string   `json:"start_time,omitempty"`
+	EndTime   *string   `json:"end_time,omitempty"`
+	Longitude *float64  `json:"longitude,omitempty"`
+	Latitude  *float64  `json:"latitude,omitempty"`
+	Id        *int      `json:"id,omitempty"`
+	Users     *[]string `json:"users,omitempty"`
+	Tags      *[]string `json:"tags,omitempty"`
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
@@ -28,7 +28,7 @@ type Note struct {
 type NoteOperations struct {
 	GetAll          func() ([]Note, error)
 	GetActiveAtTime func(string) ([]Note, error)
-  GetByUser       func(string) ([]Note, error)
+	GetByUser       func(string) ([]Note, error)
 	Create          func(*Note) (int64, error)
 	Update          func(*Note) error
 	Delete          func(int64) error
@@ -41,7 +41,7 @@ type NoteOperations struct {
 var Notes = NoteOperations{
 	GetAll:          getAllNotes,
 	GetActiveAtTime: getNotesActiveAtTime,
-  GetByUser:       getNotesActiveByUser,
+	GetByUser:       getNotesActiveByUser,
 	Create:          createNote,
 	Update:          updateNote,
 	Delete:          deleteNote,
@@ -49,7 +49,7 @@ var Notes = NoteOperations{
 
 func createNote(note *Note) (int64, error) {
 	// Prepare sql that inserts the note and returns the new id.
-	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude, user_email) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id")
+	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING id")
 
 	if err != nil {
 		return -1, err
@@ -58,7 +58,7 @@ func createNote(note *Note) (int64, error) {
 	// Execute the INSERT statement, marshalling the returned id into an int64.
 	var id int64
 	err = stmt.QueryRow(note.Title, note.Comment, note.StartTime, note.EndTime,
-		note.Longitude, note.Latitude, note.User_email).Scan(&id)
+		note.Longitude, note.Latitude).Scan(&id)
 
 	if err != nil {
 		return -1, err
@@ -186,21 +186,22 @@ func deleteNote(id int64) error {
 }
 
 func filterNotes(filter string) ([]Note, error) {
-	query := fmt.Sprintf(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
-                        FROM notes as n
-                        LEFT JOIN notestags as nt
-                        ON n.id = nt.note_id
-                        LEFT JOIN tags as t
-                        ON t.id = nt.tag_id %s`, filter)
+	query := fmt.Sprintf(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, name, tag
+                FROM notes as n
+                JOIN notesusers as nu ON n.id = nu.note_id
+                JOIN users as u ON nu.user_id = u.id
+                LEFT JOIN notestags as nt
+                ON n.id = nt.note_id
+                LEFT JOIN tags as t
+                ON t.id = nt.tag_id %s`, filter)
 
-  rows, err := db.Query(query)
+	rows, err := db.Query(query)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
-
 	notes, convErr := convertResultToNotes(rows)
 
 	if convErr != nil {
@@ -211,19 +212,19 @@ func filterNotes(filter string) ([]Note, error) {
 }
 
 func getNotesActiveByUser(userEmail string) ([]Note, error) {
-  s := fmt.Sprintf("WHERE user_email = '%s'", userEmail)
-  log.Println(s)
-  return filterNotes(s)
+	s := fmt.Sprintf("WHERE email = '%s'", userEmail)
+	log.Println(s)
+	return filterNotes(s)
 }
 
 func getNotesActiveAtTime(time string) ([]Note, error) {
-  s := fmt.Sprintf("WHERE (starttime <= '%[1]s' AND endtime >= '%[1]s')", time)
-  log.Println(s)
-  return filterNotes(s)
+	s := fmt.Sprintf("WHERE (starttime <= '%[1]s' AND endtime >= '%[1]s')", time)
+	log.Println(s)
+	return filterNotes(s)
 }
 
 func getAllNotes() ([]Note, error) {
-  return filterNotes("")
+	return filterNotes("")
 }
 
 func printNote(n Note) {
@@ -235,40 +236,43 @@ func printNote(n Note) {
 	log.Println(*n.Longitude)
 	log.Println(*n.Latitude)
 	log.Println(*n.Id)
-	log.Println(*n.User_email)
+	log.Println(*n.Users)
 }
 
 func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
-	log.Println("Entered conversion")
 	list := make([]Note, 0)
 	var fstNote *Note = nil
 	for rows.Next() {
-		log.Println("Entered loop")
 		var n Note
-		var t *string
+		var currentUser *string
+		var currentTag *string
 		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.StartTime, &n.EndTime,
-			&n.Longitude, &n.Latitude, &n.User_email, &t)
+			&n.Longitude, &n.Latitude, &currentUser, &currentTag)
 		if err != nil {
 			return nil, err
 		}
+		userarr := make([]string, 0)
 		tagarr := make([]string, 0)
+		n.Users = &userarr
 		n.Tags = &tagarr
-		if t != nil {
-			*n.Tags = append(*n.Tags, *t)
+		if currentUser != nil {
+			*n.Users = append(*n.Users, *currentUser)
+		}
+		if currentTag != nil {
+			*n.Tags = append(*n.Tags, *currentTag)
 		}
 		if fstNote == nil {
 			fstNote = &n
 		} else if *(*fstNote).Id == *n.Id {
-			*fstNote.Tags = append(*fstNote.Tags, *t)
+			*fstNote.Tags = append(*fstNote.Tags, *n.Tags...)
 		} else {
-			log.Println("appending to list")
 			list = append(list, *fstNote)
 			fstNote = &n
 		}
 	}
-  if fstNote != nil {
-	  list = append(list, *fstNote)
-  }
-	log.Println(len(list))
+	if fstNote != nil {
+		list = append(list, *fstNote)
+	}
+	//log.Println(len(list))
 	return list, nil
 }
