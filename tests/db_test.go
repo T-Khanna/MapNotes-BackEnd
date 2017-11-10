@@ -113,10 +113,9 @@ func TestInsertUser(t *testing.T) {
 
 	var email string = "user@email.com"
 
-	mock.ExpectPrepare("INSERT INTO users\\(email\\) VALUES\\(\\$1\\)").
-		ExpectExec().
-		WithArgs(email).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectPrepare("INSERT INTO users\\(email\\) VALUES\\(\\$1\\) RETURNING id").
+		ExpectQuery().
+		WithArgs(email)
 
 	models.Users.Create(&models.User{Email: email})
 	if err := mock.ExpectationsWereMet(); err != nil {
