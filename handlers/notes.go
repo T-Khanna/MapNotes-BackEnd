@@ -19,8 +19,10 @@ func decodeNoteStruct(r *http.Request) (error, *models.Note, int64) {
 	if decodeErr != nil {
 		return decodeErr, nil, -1
 	}
-	email := r.Context().Value(middlewares.UserContextKey{}).(string)
-	userErr, user_id := models.GetUserId(email)
+	user := r.Context().Value(middlewares.UserContextKey{}).(models.User)
+	email := user.Email
+	name := user.Name
+	userErr, user_id := models.GetUserId(email, name)
 	if userErr != nil {
 		return userErr, nil, -1
 	}

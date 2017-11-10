@@ -112,12 +112,13 @@ func TestInsertUser(t *testing.T) {
 	defer db.Close()
 
 	var email string = "user@email.com"
+	var name string = "Harry"
 
-	mock.ExpectPrepare("INSERT INTO users\\(email\\) VALUES\\(\\$1\\) RETURNING id").
+	mock.ExpectPrepare("INSERT INTO users\\((.)+\\) VALUES\\(\\$1, \\$2\\) RETURNING id").
 		ExpectQuery().
-		WithArgs(email)
+		WithArgs(email, name)
 
-	models.Users.Create(&models.User{Email: email})
+	models.Users.Create(&models.User{Email: email, Name: name})
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}

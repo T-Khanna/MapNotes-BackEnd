@@ -7,6 +7,8 @@ import (
 )
 
 type User struct {
+	Id    int64
+	Name  string
 	Email string
 }
 
@@ -31,7 +33,7 @@ func checkUserMap(email string) (exists bool, id int64) {
 
 	user_map_sync.RLock()
 	id, exists = user_map_sync.usermap[email]
-	user_map_sync.Unlock()
+	user_map_sync.RUnlock()
 
 	return
 
@@ -45,13 +47,21 @@ func insertUserMap(email string, id int64) {
 
 }
 
-func GetUserId(email string) (err error, id int64) {
+func GetUserId(email string, name string) (err error, id int64) {
 
 	keyExists, id := checkUserMap(email)
 
 	if !(keyExists) {
+		user, userErr := getUserByEmail(email)
+		if userErr != nil {
+			return userErr, -1
+		}
+		if user != nil && user.Id != -1 {
+			insertUserMap(email, user.Id)
+			return nil, user.Id
+		}
 
-		var newuser User = User{Email: email}
+		var newuser User = User{Name: name, Email: email}
 
 		err, id = createUser(&newuser)
 
@@ -69,14 +79,14 @@ func GetUserId(email string) (err error, id int64) {
 
 func createUser(user *User) (err error, id int64) {
 
-	stmt, err := db.Prepare("INSERT INTO users(email) VALUES($1) RETURNING id")
+	stmt, err := db.Prepare("INSERT INTO users(email, name) VALUES($1, $2) RETURNING id")
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	err = stmt.QueryRow(user.Email).Scan(&id)
+	err = stmt.QueryRow(user.Email, user.Name).Scan(&id)
 
 	if err != nil {
 		log.Println(err)
@@ -105,4 +115,17 @@ func deleteUser(email string) (err error) {
 	}
 
 	return
+}
+
+func getUserByEmail(email string) (user *User, err error) {
+	rows, err := db.Query("SELECT id, name FROM Users WHERE email = $1", email)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	user = &User{Id: -1}
+	for rows.Next() {
+		err = rows.Scan(&user.Id, &user.Name)
+	}
+	return user, err
 }
