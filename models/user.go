@@ -4,7 +4,6 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"sync"
-
 )
 
 type User struct {
@@ -12,14 +11,11 @@ type User struct {
 }
 
 type SynchronisedMap struct {
-
 	sync.RWMutex
 	usermap map[string]int64
-
 }
 
-var user_map_sync =  SynchronisedMap{usermap: make(map[string]int64)}
-
+var user_map_sync = SynchronisedMap{usermap: make(map[string]int64)}
 
 type UserOperations struct {
 	Create func(*User) (error, int64)
@@ -33,25 +29,25 @@ var Users = UserOperations{
 
 func checkUserMap(email string) (exists bool, id int64) {
 
-user_map_sync.RLock()
-id, exists = user_map_sync.usermap[email]
-user_map_sync.Unlock()
+	user_map_sync.RLock()
+	id, exists = user_map_sync.usermap[email]
+	user_map_sync.Unlock()
 
-return
+	return
 
 }
 
 func insertUserMap(email string, id int64) {
 
-  user_map_sync.Lock()
+	user_map_sync.Lock()
 	user_map_sync.usermap[email] = id
 	user_map_sync.Unlock()
 
 }
 
-func getUserId(email string) (err error, id int64) {
+func GetUserId(email string) (err error, id int64) {
 
-  keyExists, id := checkUserMap(email)
+	keyExists, id := checkUserMap(email)
 
 	if !(keyExists) {
 
@@ -61,9 +57,9 @@ func getUserId(email string) (err error, id int64) {
 
 		if err == nil {
 
-	  insertUserMap(email, id)
+			insertUserMap(email, id)
 
-	  }
+		}
 
 	}
 

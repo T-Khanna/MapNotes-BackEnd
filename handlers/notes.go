@@ -19,11 +19,13 @@ func decodeNoteStruct(r *http.Request) (error, *models.Note, int64) {
 	if decodeErr != nil {
 		return decodeErr, nil, -1
 	}
-	//TODO: Call a function that has the mapping between email and user_id
-	//email := r.Context().Value(middlewares.UserContextKey{}).(string)
-	_ = r.Context().Value(middlewares.UserContextKey{}).(string)
+	email := r.Context().Value(middlewares.UserContextKey{}).(string)
+	userErr, user_id := models.GetUserId(email)
+	if userErr != nil {
+		return userErr, nil, -1
+	}
 
-	var user_id int64 = 1
+	//var user_id int64 = 1
 	return nil, &note, user_id
 }
 
