@@ -21,18 +21,18 @@ func TestInsertNote(t *testing.T) {
 	var longitude float64 = 1.0
 	var latitude float64 = 2.0
 	var id int = -1
-	var email string = "test@mapnotes.co.uk"
+	//var email string = "test@mapnotes.co.uk"
 
 	//Input string will be converted into a regex
 	//Hence I need to double backslash all the special characters
 	//One to escape it in a string context, another to escape in a regex context
 
-	mock.ExpectPrepare("INSERT INTO notes\\(title, comments, startTime, endTime, longitude, latitude, user_email\\) VALUES\\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6, \\$7\\)").
+	mock.ExpectPrepare("INSERT INTO notes\\((.)+\\) VALUES\\((.)+\\)").
 		ExpectQuery().
-		WithArgs(title, comment, timestamp, timestamp, longitude, latitude, email)
+		WithArgs(title, comment, timestamp, timestamp, longitude, latitude)
 
 	models.Notes.Create(&models.Note{Title: &title, Comment: &comment,
-		StartTime: &timestamp, EndTime: &timestamp, Longitude: &longitude, Latitude: &latitude, Id: &id, User_email: &email})
+		StartTime: &timestamp, EndTime: &timestamp, Longitude: &longitude, Latitude: &latitude, Id: &id})
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
@@ -44,7 +44,7 @@ func TestGetAllNotes(t *testing.T) {
 	defer db.Close()
 
 	rows, note := generateTestRows()
-	mock.ExpectQuery("SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag FROM notes").
+	mock.ExpectQuery("SELECT (.)+ FROM notes (.)+ JOIN").
 		WillReturnRows(rows)
 
 	//May need to check the err returned in the line below
@@ -66,7 +66,8 @@ func TestGetAllNotes(t *testing.T) {
 	assert.Equal(t, returnedRows[0].Longitude, note.Longitude)
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
-	assert.Equal(t, returnedRows[0].User_email, note.User_email)
+	assert.Equal(t, (*returnedRows[0].Users)[0], (*note.Users)[0])
+	assert.Equal(t, (*returnedRows[0].Tags)[0], (*note.Tags)[0])
 }
 
 func TestDeleteNote(t *testing.T) {
@@ -80,13 +81,10 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 	rows, note := generateTestRows()
 
-	mock.ExpectQuery(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, user_email, tag
-										FROM notes as n
-										LEFT JOIN notestags as nt
-										ON n.id = nt.note_id
-										LEFT JOIN tags as t
-										ON t.id = nt.tag_id
-										WHERE \(starttime <= (.)+ AND endtime >= (.)+\)`).
+	mock.ExpectQuery(`SELECT (.)+
+                    FROM notes (.)+
+                    JOIN (.)+
+                    WHERE \(starttime <= (.)+ AND endtime >= (.)+\)`).
 		WillReturnRows(rows)
 	returnedRows, _ := models.Notes.GetActiveAtTime("2017-01-01 00:00")
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -104,7 +102,8 @@ func TestGetTimePeriodNotes(t *testing.T) {
 	assert.Equal(t, returnedRows[0].Longitude, note.Longitude)
 	assert.Equal(t, returnedRows[0].Latitude, note.Latitude)
 	assert.Equal(t, returnedRows[0].Id, note.Id)
-	assert.Equal(t, returnedRows[0].User_email, note.User_email)
+	assert.Equal(t, (*returnedRows[0].Users)[0], (*note.Users)[0])
+	assert.Equal(t, (*returnedRows[0].Tags)[0], (*note.Tags)[0])
 
 }
 
@@ -113,13 +112,13 @@ func TestInsertUser(t *testing.T) {
 	defer db.Close()
 
 	var email string = "user@email.com"
+	var name string = "Harry"
 
-	mock.ExpectPrepare("INSERT INTO users\\(email\\) VALUES\\(\\$1\\)").
-		ExpectExec().
-		WithArgs(email).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectPrepare("INSERT INTO users\\((.)+\\) VALUES\\(\\$1, \\$2\\) RETURNING id").
+		ExpectQuery().
+		WithArgs(email, name)
 
-	models.Users.Create(&models.User{Email: email})
+	models.Users.Create(&models.User{Email: email, Name: name})
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
 	}
@@ -129,7 +128,7 @@ type DeleteFunc func(int64) error
 
 /*
 func TestDeleteUser(t *testing.T) {
-	testDelete("users", t, models.Notes.Delete)
+  testDelete("users", t, models.Notes.Delete)
 }
 
 */
@@ -168,24 +167,25 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	longitude := 1.0
 	latitude := 2.0
 	id := 1
-	email := "test@mapnotes.co.uk"
-	tags := []string{"Harry", "Beans"}
+	//email := "test@mapnotes.co.uk"
+	users := []string{"Harry"}
+	tags := []string{"Harry"}
 
 	note = models.Note{
-		Title:      &title,
-		Comment:    &comment,
-		StartTime:  &startTime,
-		EndTime:    &endTime,
-		Longitude:  &longitude,
-		Latitude:   &latitude,
-		Id:         &id,
-		User_email: &email,
-		Tags:       &tags,
+		Title:     &title,
+		Comment:   &comment,
+		StartTime: &startTime,
+		EndTime:   &endTime,
+		Longitude: &longitude,
+		Latitude:  &latitude,
+		Id:        &id,
+		Users:     &users,
+		Tags:      &tags,
 	}
 
 	rows = sqlmock.NewRows([]string{"comments", "title", "n.id", "startTime", "endTime",
-		"longitude", "latitude", "user_email", "tag"}).
-		AddRow(comment, title, id, startTime, endTime, longitude, latitude, email, "Harry").
-		AddRow("Harry's world", "Hi Harry", 2, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, "hello@mail.com", "Beans")
+		"longitude", "latitude", "users", "tag"}).
+		AddRow(comment, title, id, startTime, endTime, longitude, latitude, "Harry", "Harry").
+		AddRow("Harry's world", "Hi Harry", 2, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, "Beans", "Beans")
 	return
 }

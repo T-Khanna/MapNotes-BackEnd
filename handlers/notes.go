@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,18 +13,22 @@ import (
 	validation "gitlab.doc.ic.ac.uk/g1736215/MapNotes/validation"
 )
 
-func decodeNoteStruct(r *http.Request) (error, *models.Note) {
+func decodeNoteStruct(r *http.Request) (error, *models.Note, int64) {
 	var note models.Note
 	decodeErr := json.NewDecoder(r.Body).Decode(&note)
 	if decodeErr != nil {
-		return decodeErr, nil
+		return decodeErr, nil, -1
 	}
-	email := r.Context().Value(middlewares.UserContextKey{}).(string)
-	note.User_email = &email
-	if note.User_email == nil {
-		return errors.New("Error: Could not retrieve email"), nil
+	user := r.Context().Value(middlewares.UserContextKey{}).(models.User)
+	email := user.Email
+	name := user.Name
+	userErr, user_id := models.GetUserId(email, name)
+	if userErr != nil {
+		return userErr, nil, -1
 	}
-	return nil, &note
+
+	//var user_id int64 = 1
+	return nil, &note, user_id
 }
 
 /*
@@ -54,7 +57,6 @@ func NotesGetByUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 
 	respondWithJson(w, struct{ Notes []models.Note }{notes}, http.StatusOK)
 }
-
 
 /*
  Route: GET /api/notes/time/:time
@@ -109,9 +111,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 */
 func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Decode body into Note struct
-	decodeErr, note := decodeNoteStruct(r)
-
-	log.Println("check")
+	decodeErr, note, user_id := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
@@ -145,6 +145,17 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	//Insert into NotesUsers table
+	insertErr := models.NotesUsers.Insert(newId, user_id)
+
+	if insertErr != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Could not insert the NoteUser mapping into database.",
+			insertErr.Error(),
+		)
+		return
+	}
 	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
 }
@@ -154,8 +165,11 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
  Creates a new Note with attributes from the request body given in JSON format.
 */
 func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// Decode body into Note struct
-	decodeErr, note := decodeNoteStruct(r)
+	/* Decode body into Note struct
+	The third return value is the name, which should not need updating
+	and thus ignored
+	*/
+	decodeErr, note, _ := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
