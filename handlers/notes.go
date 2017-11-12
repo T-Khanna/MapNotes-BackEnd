@@ -146,6 +146,10 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	//Insert into NotesUsers table
+	//this happens inside create note at the moment, so commented out
+	//assuming this user has been added into the note struct
+
+	/*
 	insertErr := models.NotesUsers.Insert(newId, user_id)
 
 	if insertErr != nil {
@@ -156,6 +160,8 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		)
 		return
 	}
+
+	*/
 	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
 }
