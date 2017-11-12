@@ -16,6 +16,9 @@ import (
 func decodeNoteStruct(r *http.Request) (error, *models.Note, int64) {
 	var note models.Note
 	decodeErr := json.NewDecoder(r.Body).Decode(&note)
+	//the above line decodes the email into a string
+	//then puts it into the users array
+	//do we instead want to make a user struct and put that in?
 	if decodeErr != nil {
 		return decodeErr, nil, -1
 	}
