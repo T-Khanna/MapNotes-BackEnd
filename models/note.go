@@ -47,6 +47,39 @@ var Notes = NoteOperations{
 	Delete:          deleteNote,
 }
 
+func mergeNotes(oldids []int64, newnote Note) {
+
+	deleteNotes(oldids);
+
+	//so we get an array of ids of notes to delete, which will use cascades
+	//the cascades will handle all of the tags and users deletion
+	//the agg function will have already figured out who the users, tags and other attributes are for this new note
+	//then we just have to create a new note.
+
+
+}
+
+func deleteNotes(deleteids []int64) (err error) {
+
+	//delete all of the notes using deleteids
+
+	for i := 0; i < len(deleteids); i++ {
+
+		err = deleteNote(deleteids[i])
+
+		if err != nil {
+
+			return
+
+		}
+
+	}
+
+	return
+
+}
+
+
 func createNote(note *Note) (int64, error) {
 	// Prepare sql that inserts the note and returns the new id.
 	stmt, err := db.Prepare("INSERT INTO notes(title, comments, startTime, endTime, longitude, latitude) VALUES($1, $2, $3, $4, $5, $6) RETURNING id")
@@ -75,6 +108,19 @@ func createNote(note *Note) (int64, error) {
 			return -1, err
 		}
 	}
+	/*
+
+	users := note.Users
+
+	for _, u := range *users {
+
+		//err := models.NotesUsers.Insert(id, models.GetUserId(email,name))
+
+		if err != nil {
+			return -1, err
+		}
+	}
+	*/
 
 	return id, nil
 }
@@ -172,6 +218,9 @@ func updateNote(note *Note) error {
 func deleteNote(id int64) error {
 	stmt, prepErr := db.Prepare("DELETE FROM Notes WHERE id = $1")
 
+	//also need code to delete notestags entries and notesuser entries
+	//or set up cascade deletes in database?
+
 	if prepErr != nil {
 		return prepErr
 	}
@@ -184,6 +233,8 @@ func deleteNote(id int64) error {
 
 	return nil
 }
+
+
 
 func filterNotes(filter string) ([]Note, error) {
 	query := fmt.Sprintf(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, name, tag
