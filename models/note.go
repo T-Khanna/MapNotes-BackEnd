@@ -108,19 +108,19 @@ func createNote(note *Note) (int64, error) {
 			return -1, err
 		}
 	}
-	/*
+
 
 	users := note.Users
 
 	for _, u := range *users {
 
-		//err := models.NotesUsers.Insert(id, models.GetUserId(email,name))
+		err := models.NotesUsers.Insert(id, models.GetUserId(u.Email,u.Name))
 
 		if err != nil {
 			return -1, err
 		}
 	}
-	*/
+
 
 	return id, nil
 }
