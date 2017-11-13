@@ -49,8 +49,8 @@ var Notes = NoteOperations{
 
 func mergeNotes(oldids []int64, newnote Note) {
 
-	deleteNotes(oldids);
-	//createNote(newnote)
+	deleteNotes(oldids)
+	createNote(newnote)
 
 	//so we get an array of ids of notes to delete, which will use cascades
 	//the cascades will handle all of the tags and users deletion
