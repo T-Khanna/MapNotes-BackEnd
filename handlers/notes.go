@@ -156,8 +156,23 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		)
 		return
 	}
+	if models.TimeForAggregate() {
+		//check range
+		var RANGE float64 = 50
+		notes, err := models.GetNotesWithinRange(RANGE, *note.Latitude, *note.Longitude)
+		if err != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Failed to perform a filter of notes with a certain range",
+				err.Error(),
+			)
+			return
+		}
+		log.Println(notes)
+	}
 	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
+
 }
 
 /*

@@ -6,9 +6,23 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
+	"sync"
 
 	_ "github.com/lib/pq"
 )
+
+//Struct to hold the insertion count
+type SynchronisedNoteCounter struct {
+	sync.RWMutex
+	counter int
+}
+
+/*
+  A counter that is used to keep track of how many notes we have inserted
+  during the run time of the server.
+*/
+var insertionNoteCounter = SynchronisedNoteCounter{counter: 0}
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
@@ -72,26 +86,31 @@ func createNote(note *Note) (int64, error) {
 		err := linkTag(t, id)
 
 		if err != nil {
-			return -1, err
+			return id, err
 		}
 	}
+
+	//Increment counter
+	insertionNoteCounter.Lock()
+	insertionNoteCounter.counter += 1
+	insertionNoteCounter.Unlock()
 
 	return id, nil
 }
 
 func updateNote(note *Note) error {
 	/*
-	  To implement partial updates:
+	   To implement partial updates:
 
-	  The fields of the Note struct must be pointers, so that they we can
-	  distinguish when they've been ommitted from the JSON by checking if the
-	  pointer is nil.
+	   The fields of the Note struct must be pointers, so that they we can
+	   distinguish when they've been ommitted from the JSON by checking if the
+	   pointer is nil.
 
-	  To dynamically construct the query based on what columns are included, uses a
-	  bunch of if statements that check if a column is present and, if so, appends
-	  "column name = $n" to the byte buffer.
+	   To dynamically construct the query based on what columns are included, uses a
+	   bunch of if statements that check if a column is present and, if so, appends
+	   "column name = $n" to the byte buffer.
 
-	  Uses a byte buffer to avoid re-concatenating strings over and over.
+	   Uses a byte buffer to avoid re-concatenating strings over and over.
 	*/
 
 	if note.Id == nil {
@@ -275,4 +294,47 @@ func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 	}
 	//log.Println(len(list))
 	return list, nil
+}
+
+func TimeForAggregate() bool {
+	var valid bool = false
+	insertionNoteCounter.Lock()
+	if insertionNoteCounter.counter == 3 {
+		insertionNoteCounter.counter = 0
+		valid = true
+	}
+	insertionNoteCounter.Unlock()
+	return valid
+}
+
+/* Gets all notes in Notes table that are within a certain range
+radius - metres
+longitude - degrees
+latitude - degrees
+*/
+func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (notes []Note, err error) {
+	var RADIUS_OF_EARTH float64 = 6371
+	result := make([]Note, 0)
+
+	rlat := degToRadians(latitude)
+	rlong := degToRadians(longitude)
+
+	notes, err = getAllNotes()
+	if err != nil {
+		return result, err
+	}
+
+	for i := 0; i < len(notes); i++ {
+		nrlat := degToRadians(*notes[i].Latitude)
+		nrlong := degToRadians(*notes[i].Longitude)
+		if math.Acos(math.Sin(rlat)*math.Sin(nrlat)+math.Cos(rlat)*math.Cos(nrlat)*math.Cos(nrlong-(rlong)))*RADIUS_OF_EARTH <= radius {
+			result = append(result, notes[i])
+		}
+	}
+
+	return result, nil
+}
+
+func degToRadians(degrees float64) float64 {
+	return degrees * math.Pi / 180
 }
