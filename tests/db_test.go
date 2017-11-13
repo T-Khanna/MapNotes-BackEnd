@@ -168,7 +168,7 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	latitude := 2.0
 	id := 1
 	//email := "test@mapnotes.co.uk"
-	users := []string{"Harry"}
+	users := []models.User{{Name:"Harry", Email:"beans@classic.com"}}
 	tags := []string{"Harry"}
 
 	note = models.Note{

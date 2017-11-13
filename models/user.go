@@ -4,6 +4,7 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"sync"
+
 )
 
 type User struct {
@@ -47,7 +48,10 @@ func insertUserMap(email string, id int64) {
 
 }
 
-func GetUserId(email string, name string) (err error, id int64) {
+func GetUserId(u User) (err error, id int64) {
+
+	email := u.Email
+	name := u.Name
 
 	keyExists, id := checkUserMap(email)
 
@@ -100,6 +104,8 @@ func createUser(user *User) (err error, id int64) {
 //Not a vital function, but here if a user did wish to delete their account
 func deleteUser(email string) (err error) {
 
+	//TODO: make this function deletr from the hashmap
+
 	stmt, err := db.Prepare("DELETE FROM users WHERE email = $1")
 
 	if err != nil {
@@ -119,10 +125,12 @@ func deleteUser(email string) (err error) {
 
 func getUserByEmail(email string) (user *User, err error) {
 	rows, err := db.Query("SELECT id, name FROM Users WHERE email = $1", email)
-	defer rows.Close()
+
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 	user = &User{Id: -1}
 	for rows.Next() {
 		err = rows.Scan(&user.Id, &user.Name)

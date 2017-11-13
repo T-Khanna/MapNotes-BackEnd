@@ -12,15 +12,15 @@ import (
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
-	Title     *string   `json:"title,omitempty"`
-	Comment   *string   `json:"comment,omitempty"`
-	StartTime *string   `json:"start_time,omitempty"`
-	EndTime   *string   `json:"end_time,omitempty"`
-	Longitude *float64  `json:"longitude,omitempty"`
-	Latitude  *float64  `json:"latitude,omitempty"`
-	Id        *int      `json:"id,omitempty"`
-	Users     *[]string `json:"users,omitempty"`
-	Tags      *[]string `json:"tags,omitempty"`
+	Title     *string        `json:"title,omitempty"`
+	Comment   *string        `json:"comment,omitempty"`
+	StartTime *string        `json:"start_time,omitempty"`
+	EndTime   *string        `json:"end_time,omitempty"`
+	Longitude *float64       `json:"longitude,omitempty"`
+	Latitude  *float64       `json:"latitude,omitempty"`
+	Id        *int           `json:"id,omitempty"`
+	Users     *[]User        `json:"users,omitempty"`
+	Tags      *[]string      `json:"tags,omitempty"`
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
@@ -50,6 +50,7 @@ var Notes = NoteOperations{
 func mergeNotes(oldids []int64, newnote Note) {
 
 	deleteNotes(oldids);
+	//createNote(newnote)
 
 	//so we get an array of ids of notes to delete, which will use cascades
 	//the cascades will handle all of the tags and users deletion
@@ -114,7 +115,9 @@ func createNote(note *Note) (int64, error) {
 
 	for _, u := range *users {
 
-		err := models.NotesUsers.Insert(id, models.GetUserId(u.Email,u.Name))
+		_, uid := GetUserId(u)
+
+		err := NotesUsers.Insert(id, uid)
 
 		if err != nil {
 			return -1, err
@@ -278,49 +281,64 @@ func getAllNotes() ([]Note, error) {
 	return filterNotes("")
 }
 
-func printNote(n Note) {
-	log.Println("Printing note...")
-	log.Println(*n.Title)
-	log.Println(*n.Comment)
-	log.Println(*n.StartTime)
-	log.Println(*n.EndTime)
-	log.Println(*n.Longitude)
-	log.Println(*n.Latitude)
-	log.Println(*n.Id)
-	log.Println(*n.Users)
-}
 
 func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
 	list := make([]Note, 0)
 	var fstNote *Note = nil
+	var fstTag *string = nil
+
 	for rows.Next() {
+
 		var n Note
-		var currentUser *string
+		var currentUser *User
+		var currentUserNameString *string
 		var currentTag *string
+
 		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.StartTime, &n.EndTime,
-			&n.Longitude, &n.Latitude, &currentUser, &currentTag)
+			&n.Longitude, &n.Latitude, &currentUserNameString, &currentTag)
+
 		if err != nil {
 			return nil, err
 		}
-		userarr := make([]string, 0)
+
+		userarr := make([]User, 0)
 		tagarr := make([]string, 0)
 		n.Users = &userarr
 		n.Tags = &tagarr
-		if currentUser != nil {
-			*n.Users = append(*n.Users, *currentUser)
+
+		//if currentUser != nil {
+		//	*n.Users = append(*n.Users, *currentUser)
+	//	}
+
+		//if currentTag != nil {
+		//	*n.Tags = append(*n.Tags, *currentTag)
+		//}
+
+		if fstTag == nil {
+
+			fstTag = &currentTag
+
+		} else if *currentTag == *fstTag {
+
+
+
+		} else {
+
+			*fstNote.Tags = append(*fstNote.Tags, *n.Tags...)
+
+
 		}
-		if currentTag != nil {
-			*n.Tags = append(*n.Tags, *currentTag)
-		}
+
 		if fstNote == nil {
 			fstNote = &n
 		} else if *(*fstNote).Id == *n.Id {
-			*fstNote.Tags = append(*fstNote.Tags, *n.Tags...)
 		} else {
 			list = append(list, *fstNote)
 			fstNote = &n
 		}
+
 	}
+
 	if fstNote != nil {
 		list = append(list, *fstNote)
 	}

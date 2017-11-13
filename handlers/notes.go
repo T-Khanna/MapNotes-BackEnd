@@ -13,25 +13,20 @@ import (
 	validation "gitlab.doc.ic.ac.uk/g1736215/MapNotes/validation"
 )
 
-func decodeNoteStruct(r *http.Request) (error, *models.Note, int64) {
+func decodeNoteStruct(r *http.Request) (error, *models.Note) {
 	var note models.Note
 	decodeErr := json.NewDecoder(r.Body).Decode(&note)
 	//the above line decodes the email into a string
 	//then puts it into the users array
 	//do we instead want to make a user struct and put that in?
 	if decodeErr != nil {
-		return decodeErr, nil, -1
+		return decodeErr, nil
 	}
 	user := r.Context().Value(middlewares.UserContextKey{}).(models.User)
-	email := user.Email
-	name := user.Name
-	userErr, user_id := models.GetUserId(email, name)
-	if userErr != nil {
-		return userErr, nil, -1
-	}
 
-	//var user_id int64 = 1
-	return nil, &note, user_id
+	*note.Users = append(*note.Users, user)
+
+	return nil, &note
 }
 
 /*
@@ -114,7 +109,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 */
 func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Decode body into Note struct
-	decodeErr, note, user_id := decodeNoteStruct(r)
+	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
@@ -148,24 +143,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	//Insert into NotesUsers table
-	//this happens inside create note at the moment, so commented out
-	//assuming this user has been added into the note struct
 
-	/*
-	insertErr := models.NotesUsers.Insert(newId, user_id)
-
-	if insertErr != nil {
-		logAndRespondWithError(
-			w,
-			"Error: Could not insert the NoteUser mapping into database.",
-			insertErr.Error(),
-		)
-		return
-	}
-
-	*/
-	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
 }
 
@@ -178,7 +156,7 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	The third return value is the name, which should not need updating
 	and thus ignored
 	*/
-	decodeErr, note, _ := decodeNoteStruct(r)
+	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
