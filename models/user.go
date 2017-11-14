@@ -56,13 +56,18 @@ func GetUserId(u User) (err error, id int64) {
 	keyExists, id := checkUserMap(email)
 
 	if !(keyExists) {
+
 		user, userErr := getUserByEmail(email)
+
 		if userErr != nil {
 			return userErr, -1
 		}
+
 		if user != nil && user.Id != -1 {
+
 			insertUserMap(email, user.Id)
 			return nil, user.Id
+
 		}
 
 		var newuser User = User{Name: name, Email: email}
@@ -105,6 +110,7 @@ func createUser(user *User) (err error, id int64) {
 func deleteUser(email string) (err error) {
 
 	//TODO: make this function deletr from the hashmap
+	//TODO: set up cascade deletes
 
 	stmt, err := db.Prepare("DELETE FROM users WHERE email = $1")
 
