@@ -116,12 +116,48 @@ func TestInsertUser(t *testing.T) {
 
 	mock.ExpectPrepare("INSERT INTO users\\((.)+\\) VALUES\\(\\$1, \\$2\\) RETURNING id").
 		ExpectQuery().
-		WithArgs(email, name)
+		WithArgs(email, name).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).
+			AddRow("3"))
 
 	models.Users.Create(&models.User{Email: email, Name: name})
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("There were unfufilled expectations: %s", err)
+		t.Fatalf("There were unfufilled expectations: %s", err)
 	}
+}
+
+func TestGetNotesWithinRange(t *testing.T) {
+	db, mock := initMockDB(t)
+	defer db.Close()
+
+	rows, note := generateTestRows()
+
+	mock.ExpectQuery("SELECT (.)+ FROM notes (.)+ JOIN").
+		WillReturnRows(rows)
+
+	returnedNotes, err := models.GetNotesWithinRange(50, 2.0001, 1.0)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfufilled expectations: %s", err)
+		return
+	}
+	if len(returnedNotes) < 1 {
+		t.Errorf("Function did not return correct number of rows. Returned %d rows", len(returnedNotes))
+		return
+	}
+	assert.Equal(t, returnedNotes[0].Title, note.Title)
+	assert.Equal(t, returnedNotes[0].Comment, note.Comment)
+	assert.Equal(t, returnedNotes[0].StartTime, note.StartTime)
+	assert.Equal(t, returnedNotes[0].EndTime, note.EndTime)
+	assert.Equal(t, returnedNotes[0].Longitude, note.Longitude)
+	assert.Equal(t, returnedNotes[0].Latitude, note.Latitude)
+	assert.Equal(t, returnedNotes[0].Id, note.Id)
+	assert.Equal(t, (*returnedNotes[0].Users)[0], (*note.Users)[0])
+	assert.Equal(t, (*returnedNotes[0].Tags)[0], (*note.Tags)[0])
+
 }
 
 type DeleteFunc func(int64) error
@@ -186,6 +222,6 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	rows = sqlmock.NewRows([]string{"comments", "title", "n.id", "startTime", "endTime",
 		"longitude", "latitude", "users", "tag"}).
 		AddRow(comment, title, id, startTime, endTime, longitude, latitude, "Harry", "Harry").
-		AddRow("Harry's world", "Hi Harry", 2, "2017-01-01 00:00", "2017-05-05 00:00", 1.0, 2.0, "Beans", "Beans")
+		AddRow("Harry's world", "Hi Harry", 2, "2017-01-01 00:00", "2017-05-05 00:00", 3.0, 2.0, "Beans", "Beans")
 	return
 }

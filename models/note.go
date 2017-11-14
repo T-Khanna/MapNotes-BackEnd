@@ -313,11 +313,7 @@ longitude - degrees
 latitude - degrees
 */
 func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (notes []Note, err error) {
-	var RADIUS_OF_EARTH float64 = 6371
 	result := make([]Note, 0)
-
-	rlat := degToRadians(latitude)
-	rlong := degToRadians(longitude)
 
 	notes, err = getAllNotes()
 	if err != nil {
@@ -325,9 +321,8 @@ func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (n
 	}
 
 	for i := 0; i < len(notes); i++ {
-		nrlat := degToRadians(*notes[i].Latitude)
-		nrlong := degToRadians(*notes[i].Longitude)
-		if math.Acos(math.Sin(rlat)*math.Sin(nrlat)+math.Cos(rlat)*math.Cos(nrlat)*math.Cos(nrlong-(rlong)))*RADIUS_OF_EARTH <= radius {
+		distance := greatCircleDistance(latitude, longitude, *notes[i].Latitude, *notes[i].Longitude)
+		if distance <= radius {
 			result = append(result, notes[i])
 		}
 	}
@@ -337,4 +332,23 @@ func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (n
 
 func degToRadians(degrees float64) float64 {
 	return degrees * math.Pi / 180
+}
+
+//calculates shortest distance of two spherical co-ordinates in metres using Haversine formula
+func greatCircleDistance(plat1 float64, plong1 float64, plat2 float64, plong2 float64) float64 {
+	var EARTH_RADIUS float64 = 6371000 //metres
+	dLat := (plat2 - plat1) * (math.Pi / 180.0)
+	dLon := (plong2 - plong1) * (math.Pi / 180.0)
+
+	lat1 := plat1 * (math.Pi / 180.0)
+	lat2 := plat2 * (math.Pi / 180.0)
+
+	a1 := math.Sin(dLat/2) * math.Sin(dLat/2)
+	a2 := math.Sin(dLon/2) * math.Sin(dLon/2) * math.Cos(lat1) * math.Cos(lat2)
+
+	a := a1 + a2
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return EARTH_RADIUS * c
 }
