@@ -109,7 +109,7 @@ func createUser(user *User) (err error, id int64) {
 //Not a vital function, but here if a user did wish to delete their account
 func deleteUser(email string) (err error) {
 
-	//TODO: make this function deletr from the hashmap
+	//TODO: make this function delete from the hashmap
 	//TODO: set up cascade deletes
 
 	stmt, err := db.Prepare("DELETE FROM users WHERE email = $1")

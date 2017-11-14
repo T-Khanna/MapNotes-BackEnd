@@ -63,6 +63,7 @@ func mergeNotes(oldIds []int64, newNote Note) {
 func deleteNotes(deleteids []int64) (err error) {
 
 	//delete all of the notes using deleteids
+	//TODO: Set up cascade deletes
 
 	for i := 0; i < len(deleteids); i++ {
 
