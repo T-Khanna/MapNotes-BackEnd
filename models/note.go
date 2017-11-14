@@ -525,3 +525,83 @@ func areSimilarStrings(s1 string, s2 string) bool {
   }
   return true
 }
+
+type noteOccurs struct {
+	note   Note
+	occurs int
+}
+
+
+/*
+  Iterates through notes and returns notes that have similar tags given that
+	they are aroung the same location and have roughly the same title
+*/
+func GetNotesWithSimilarTags(notes []Note) (filtered []Note, err error) {
+	// For each index i in upperlist,
+	// note i has notes that have similar tags to it
+	var upperList [][]noteOccurs
+	lowerList := []noteOccurs{}
+
+	// Store maximum number of notes with similar tags
+	index_of_notes_similar := 0
+	max_num_of_notes_similar := 0
+
+  // Go through each note,
+	// for each note i, check all the other notes to see if they have similar tags
+	// lowerlist contains all tags similar to note i
+	// And then upperList[i] contains lowerlist
+	for i := 0; i < len(notes); i++ {
+		for j := i+1; i < len(notes); j++ {
+			similar, occ := notesHaveSimilarTags(notes[i], notes[j])
+			if similar {
+				noteOccurs := noteOccurs{note: notes[j], occurs: occ}
+				lowerList = append(lowerList, noteOccurs)
+			}
+		}
+		upperList[i] = lowerList
+
+		// Check and keep track of maximum number of notes with similar tags
+		len := len(lowerList)
+		if len >= max_num_of_notes_similar {
+			max_num_of_notes_similar = len
+			index_of_notes_similar = i
+		}
+		// Reset lowerlist to refill in next forloop
+		lowerList = nil
+	}
+
+   // Return maximum number of notes with similar tags
+	 lowerList = upperList[index_of_notes_similar]
+
+	 i := 1
+	 filtered[0] = notes[index_of_notes_similar]
+	 for _, nList := range lowerList {
+		 filtered[i] = nList.note
+		 i++;
+	 }
+
+	return filtered, nil
+}
+
+/*
+  Function which returns true if each note has a least
+  one tag in common with the other.
+  It also returns number of tags it has in common.
+*/
+func notesHaveSimilarTags(n Note, m Note) (bool, int) {
+	tags_n := *n.Tags
+	tags_m := *m.Tags
+
+	similar := false
+	num_common := 0
+
+	for _, tn := range tags_n {
+		for _, tm := range tags_m {
+			if (tn == tm) {
+				num_common++
+				similar = true
+			}
+		}
+	}
+	return similar, num_common
+}
