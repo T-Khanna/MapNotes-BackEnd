@@ -230,44 +230,50 @@ func TestGetNotesWithinRange(t *testing.T) {
 
 }
 
-func TestGetSimilarTags(t* testing.T) {
-    t1 := "title1"
-    c := "comment"
-    s := "s"
-    e := "e"
-    long := 100
-    lat := 12
-    id:= 2
+
+func TestGetSimilarTags(t *testing.T) {
+
+    var title string = "Test title"
+    var c string = "test comment"
+    var s = "test_start"
+    var e = "test_end"
+    var long float64 = 1.0
+    var lat float64 = 2.0
+    var id int = -1
     users := []string{"u11"}
     tags1 := []string{"tag1", "tag2", "tag3"}
-    
-    note1 := Note{Title: &t1 Comment: &c1 StartTime: &s EndTime: &e Longitude: &long Latitude: &lat Id: &id Users: &users Tags: &tags1}
-    
-    t2 := "title2"
+
+    note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags1}
+
     tags2 := []string{"tag1", "tag4"}
-    
-    note2 := Note{Title: &t2 Comment: &c1 StartTime: &s EndTime: &e Longitude: &long Latitude: &lat Id: &id Users: &users Tags: &tags2}
-    
-    t3 := "title3"
+
+    note2 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags2}
+
     tags3 := []string{"tag5", "tag6"}
-    
-    note3 := Note{Title: &t3 Comment: &c1 StartTime: &s EndTime: &e Longitude: &long Latitude: &lat Id: &id Users: &users Tags: &tags3}
-    
-    notes[0] := note1
-    notes[1] := note2
-    notes[2] := note3
-    
-    filtered, err := GetNotesWithSimilarTags(notes)
-    
+
+    note3 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+                        Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags3}
+
+    var notes []models.Note = make([]models.Note, 3)
+    notes[0] = note1
+    notes[1] = note2
+    notes[2] = note3
+
+    filtered, err := models.GetNotesWithSimilarTags(notes)
+
     if(err != nil) {
-        t.Errorf("Function: GetNotesWithSimilarTags threw an error!")
+        t.Errorf("Function: GetNotesWithSimilarTags threw an error: %s", err)
     }
-    
+
     //filtered should contain only note1 and note2 since both are similar
     assert.Equal(t, len(filtered), 2)
     assert.Equal(t, filtered[0], note1)
     assert.Equal(t, filtered[1], note2)
 }
+
+
 
 type DeleteFunc func(int64) error
 
