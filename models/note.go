@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+  "sort"
 
 	_ "github.com/lib/pq"
 )
@@ -267,6 +268,26 @@ func filterNotes(whereClause string) ([]Note, error) {
 	return rowsToNotes(notesWithUsersRows, notesWithTagsRows)
 }
 
+type reverseChronologicalOrder []Note
+
+func (a reverseChronologicalOrder) Len() int {
+  return len(a)
+}
+
+func (a reverseChronologicalOrder) Swap(i, j int) {
+  a[i], a[j] = a[j], a[i]
+}
+
+func (a reverseChronologicalOrder) Less(i, j int) bool {
+    if *a[i].StartTime > *a[j].StartTime {
+       return true
+    }
+    if *a[i].StartTime < *a[j].StartTime {
+       return false
+    }
+    return *a[i].EndTime > *a[j].EndTime
+}
+
 /**
  * Takes rows of (...note, ...user) and (note.id, tag) and constructs a slice
  * of note objects with the tag and user arrays filled in.
@@ -278,12 +299,14 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 	   notes with tags, insert the tags into the note struct taken from the map
 	   with the correct id.
 	*/
-	notesById := make(map[int]*Note)
+	notesById := make(map[int]Note)
 
 	// Iterate over the notesWithUsersRows, populating notesById and each note's
 	// users field.
+  var emptyNote Note
 	var note Note
 	var user User
+
 	for notesWithUsersRows.Next() {
 		err := notesWithUsersRows.Scan(
 			&note.Comment,
@@ -304,9 +327,9 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 		// If not already hit this note, add it to the map and initialise its users.
 		// Else, get the note from the map and add this user to its users.
 		notesWithUsers := notesById[*note.Id]
-		if notesWithUsers == nil {
+		if notesWithUsers == emptyNote {
 			note.Users = &[]User{user}
-			notesById[*note.Id] = &note
+			notesById[*note.Id] = note
 		} else {
 			noteUsers := notesWithUsers.Users
 			*noteUsers = append(*noteUsers, user)
@@ -324,7 +347,7 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 
 		// If tags not yet constructed, construct it, else append.
 		noteWithUsers := notesById[*note.Id]
-		if noteWithUsers == nil {
+		if noteWithUsers == emptyNote {
 			// FIXME: wtf why is this happening?
 			log.Printf("Error in models.rowsToResults(): Found note with tag but not user: %+v", note)
 		} else if tag != nil && noteWithUsers.Tags == nil {
@@ -337,10 +360,13 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 	// Convert map to slice
 	// FIXME: Is there a way to do this without required this extra iteration
 	//        over all notes?
-	var notes []Note
+	var notes []Note = make([]Note, 0)
 	for _, note := range notesById {
-		notes = append(notes, *note)
+		notes = append(notes, note)
 	}
+
+  // Sorting notes
+  sort.Sort(reverseChronologicalOrder(notes))
 
 	return notes, nil
 }
