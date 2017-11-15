@@ -127,6 +127,13 @@ func TestInsertUser(t *testing.T) {
 }
 
 func TestGetNotesWithinRange(t *testing.T) {
+	longitude := 1.0
+	latitude := 2.0001
+
+	note := models.Note{
+		Longitude: &longitude,
+		Latitude:  &latitude,
+	}
 	db, mock := initMockDB(t)
 	defer db.Close()
 
@@ -135,7 +142,7 @@ func TestGetNotesWithinRange(t *testing.T) {
 	mock.ExpectQuery("SELECT (.)+ FROM notes (.)+ JOIN").
 		WillReturnRows(rows)
 
-	returnedNotes, err := models.GetNotesWithinRange(50, 2.0001, 1.0)
+	returnedNotes, err := models.GetNotesWithinRange(50, note)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return

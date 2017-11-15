@@ -313,8 +313,11 @@ radius - metres
 longitude - degrees
 latitude - degrees
 */
-func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (notes []Note, err error) {
+func GetNotesWithinRange(radius float64, note Note) (notes []Note, err error) {
 	result := make([]Note, 0)
+	result = append(result, note)
+	latitude := *note.Latitude
+	longitude := *note.Longitude
 
 	notes, err = getAllNotes()
 	if err != nil {
