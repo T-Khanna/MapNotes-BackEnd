@@ -33,6 +33,7 @@ type NoteOperations struct {
 	Create          func(*Note) (int64, error)
 	Update          func(*Note) error
 	Delete          func(int64) error
+	Merge           func([]int64, Note)
 }
 
 // Exported API. Use as models.Notes.Create(..)
@@ -46,6 +47,7 @@ var Notes = NoteOperations{
 	Create:          createNote,
 	Update:          updateNote,
 	Delete:          deleteNote,
+	Merge:           mergeNotes,
 }
 
 func mergeNotes(oldIds []int64, newNote Note) {

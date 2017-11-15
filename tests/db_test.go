@@ -129,6 +129,38 @@ func TestGetTimePeriodNotes(t *testing.T) {
 
 }
 
+func TestMergeNotes(t *testing.T) {
+
+	models.InitDB()
+
+
+  newtitle := "newnote"
+	title := "testing title"
+	comment := "testing comments"
+	startTime := "2017-01-01 00:00"
+	endTime := "2017-05-05 00:00"
+	longitude := 1.0
+	latitude := 2.0
+	id := 1
+	//email := "test@mapnotes.co.uk"
+	users := []models.User{{Name:"Harry", Email:"beans@classic.com"}}
+	tags := []string{"Harry"}
+
+	note := generateTestNote(newtitle, comment, startTime, endTime, longitude, latitude, id, users, tags)
+	note1 := generateTestNote(title, comment, startTime, endTime, longitude, latitude, id, users, tags)
+	note2 := generateTestNote(title, comment, startTime, endTime, longitude, latitude, id, users, tags)
+	note3 := generateTestNote(title, comment, startTime, endTime, longitude, latitude, id, users, tags)
+
+	id1, _ := models.Notes.Create(&note1)
+	id2, _ := models.Notes.Create(&note2)
+	id3, _ := models.Notes.Create(&note3)
+
+	ids := []int64{id1, id2, id3}
+
+	models.Notes.Merge(ids, note)
+
+}
+
 func TestInsertUser(t *testing.T) {
 	db, mock := initMockDB(t)
 	defer db.Close()
@@ -181,17 +213,8 @@ func initMockDB(t *testing.T) (db *sql.DB, mock sqlmock.Sqlmock) {
 	return
 }
 
-func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
-	title := "testing title"
-	comment := "testing comments"
-	startTime := "2017-01-01 00:00"
-	endTime := "2017-05-05 00:00"
-	longitude := 1.0
-	latitude := 2.0
-	id := 1
-	//email := "test@mapnotes.co.uk"
-	users := []models.User{{Name:"Harry", Email:"beans@classic.com"}}
-	tags := []string{"Harry"}
+func generateTestNote(title string, comment string, startTime string,
+	 endTime string, longitude float64, latitude float64, id int, users []models.User, tags []string) ( note models.Note) {
 
 	note = models.Note{
 		Title:     &title,
@@ -204,6 +227,25 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 		Users:     &users,
 		Tags:      &tags,
 	}
+
+	return
+
+}
+
+func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
+
+	title := "testing title"
+	comment := "testing comments"
+	startTime := "2017-01-01 00:00"
+	endTime := "2017-05-05 00:00"
+	longitude := 1.0
+	latitude := 2.0
+	id := 1
+	//email := "test@mapnotes.co.uk"
+	users := []models.User{{Name:"Harry", Email:"beans@classic.com"}}
+	tags := []string{"Harry"}
+
+	note = generateTestNote(title, comment, startTime, endTime, longitude, latitude, id, users, tags)
 
 	rows = sqlmock.NewRows([]string{"comments", "title", "n.id", "startTime", "endTime",
 		"longitude", "latitude", "users", "tag"}).
