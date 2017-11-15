@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"math"
+	"math/rand"
 	"sync"
-
-	_ "github.com/lib/pq"
+	"time"
 )
 
 //Struct to hold the insertion count
@@ -300,7 +301,7 @@ func TimeForAggregate() bool {
 	var valid bool = false
 	insertionNoteCounter.Lock()
 	if insertionNoteCounter.counter == 3 {
-		insertionNoteCounter.counter = 0
+		insertionNoteCounter.counter = randomRange(1, 5)
 		valid = true
 	}
 	insertionNoteCounter.Unlock()
@@ -331,17 +332,17 @@ func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (n
 }
 
 func degToRadians(degrees float64) float64 {
-	return degrees * math.Pi / 180
+	return degrees * (math.Pi / 180.0)
 }
 
 //calculates shortest distance of two spherical co-ordinates in metres using Haversine formula
 func greatCircleDistance(plat1 float64, plong1 float64, plat2 float64, plong2 float64) float64 {
 	var EARTH_RADIUS float64 = 6371000 //metres
-	dLat := (plat2 - plat1) * (math.Pi / 180.0)
-	dLon := (plong2 - plong1) * (math.Pi / 180.0)
+	dLat := degToRadians(plat2 - plat1)
+	dLon := degToRadians(plong2 - plong1)
 
-	lat1 := plat1 * (math.Pi / 180.0)
-	lat2 := plat2 * (math.Pi / 180.0)
+	lat1 := degToRadians(plat1)
+	lat2 := degToRadians(plat2)
 
 	a1 := math.Sin(dLat/2) * math.Sin(dLat/2)
 	a2 := math.Sin(dLon/2) * math.Sin(dLon/2) * math.Cos(lat1) * math.Cos(lat2)
@@ -351,4 +352,9 @@ func greatCircleDistance(plat1 float64, plong1 float64, plat2 float64, plong2 fl
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
 	return EARTH_RADIUS * c
+}
+
+func randomRange(min int, max int) (result int) {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return rand.Intn(max-min) + min
 }
