@@ -5,11 +5,27 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
-  "sort"
-
 	_ "github.com/lib/pq"
+	"log"
+	"math"
+	"math/rand"
+	"sort"
+	"sync"
+	"time"
+  "strings"
 )
+
+//Struct to hold the insertion count
+type SynchronisedNoteCounter struct {
+	sync.RWMutex
+	counter int
+}
+
+/*
+  A counter that is used to keep track of how many notes we have inserted
+  during the run time of the server.
+*/
+var insertionNoteCounter = SynchronisedNoteCounter{counter: 0}
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
@@ -100,7 +116,7 @@ func createNote(note *Note) (int64, error) {
 		err := linkTag(t, id)
 
 		if err != nil {
-			return -1, err
+			return id, err
 		}
 	}
 
@@ -116,6 +132,11 @@ func createNote(note *Note) (int64, error) {
 			return -1, err
 		}
 	}
+
+	//Increment counter
+	insertionNoteCounter.Lock()
+	insertionNoteCounter.counter += 1
+	insertionNoteCounter.Unlock()
 
 	return id, nil
 }
@@ -263,21 +284,21 @@ func filterNotes(whereClause string) ([]Note, error) {
 type reverseChronologicalOrder []Note
 
 func (a reverseChronologicalOrder) Len() int {
-  return len(a)
+	return len(a)
 }
 
 func (a reverseChronologicalOrder) Swap(i, j int) {
-  a[i], a[j] = a[j], a[i]
+	a[i], a[j] = a[j], a[i]
 }
 
 func (a reverseChronologicalOrder) Less(i, j int) bool {
-    if *a[i].StartTime > *a[j].StartTime {
-       return true
-    }
-    if *a[i].StartTime < *a[j].StartTime {
-       return false
-    }
-    return *a[i].EndTime > *a[j].EndTime
+	if *a[i].StartTime > *a[j].StartTime {
+		return true
+	}
+	if *a[i].StartTime < *a[j].StartTime {
+		return false
+	}
+	return *a[i].EndTime > *a[j].EndTime
 }
 
 /**
@@ -295,7 +316,7 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 
 	// Iterate over the notesWithUsersRows, populating notesById and each note's
 	// users field.
-  var emptyNote Note
+	var emptyNote Note
 	var note Note
 	var user User
 
@@ -318,13 +339,14 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 
 		// If not already hit this note, add it to the map and initialise its users.
 		// Else, get the note from the map and add this user to its users.
-		notesWithUsers := notesById[*note.Id]
-		if notesWithUsers == emptyNote {
+		noteWithUsers := notesById[*note.Id]
+		if noteWithUsers == emptyNote {
 			note.Users = &[]User{user}
 			notesById[*note.Id] = note
 		} else {
-			noteUsers := notesWithUsers.Users
+			noteUsers := noteWithUsers.Users
 			*noteUsers = append(*noteUsers, user)
+			notesById[*note.Id] = noteWithUsers
 		}
 	}
 
@@ -342,10 +364,17 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 		if noteWithUsers == emptyNote {
 			// FIXME: wtf why is this happening?
 			log.Printf("Error in models.rowsToResults(): Found note with tag but not user: %+v", note)
+		} else if tag == nil && noteWithUsers.Tags == nil {
+			var emptyTags []string = make([]string, 0)
+			noteWithUsers.Tags = &emptyTags
+			//noteWithUsers.Tags = &[]string{}
 		} else if tag != nil && noteWithUsers.Tags == nil {
 			noteWithUsers.Tags = &[]string{*tag}
 		} else if tag != nil {
 			*noteWithUsers.Tags = append(*noteWithUsers.Tags, *tag)
+		}
+		if noteWithUsers != emptyNote {
+			notesById[*note.Id] = noteWithUsers
 		}
 	}
 
@@ -354,11 +383,13 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 	//        over all notes?
 	var notes []Note = make([]Note, 0)
 	for _, note := range notesById {
+		if note.Tags == nil {
+		}
 		notes = append(notes, note)
 	}
 
-  // Sorting notes
-  sort.Sort(reverseChronologicalOrder(notes))
+	// Sorting notes
+	sort.Sort(reverseChronologicalOrder(notes))
 
 	return notes, nil
 }
@@ -377,4 +408,120 @@ func getNotesActiveAtTime(time string) ([]Note, error) {
 
 func getAllNotes() ([]Note, error) {
 	return filterNotes("")
+}
+
+func printNote(n Note) {
+	log.Println("Printing note...")
+	log.Println(*n.Title)
+	log.Println(*n.Comment)
+	log.Println(*n.StartTime)
+	log.Println(*n.EndTime)
+	log.Println(*n.Longitude)
+	log.Println(*n.Latitude)
+	log.Println(*n.Id)
+	log.Println(*n.Users)
+	log.Println(*n.Tags)
+}
+
+func TimeForAggregate() bool {
+	var valid bool = false
+	insertionNoteCounter.Lock()
+	if insertionNoteCounter.counter == 3 {
+		insertionNoteCounter.counter = randomRange(1, 5)
+		valid = true
+	}
+	insertionNoteCounter.Unlock()
+	return valid
+}
+
+/* Gets all notes in Notes table that are within a certain range
+radius - metres
+longitude - degrees
+latitude - degrees
+*/
+func GetNotesWithinRange(radius float64, note Note) (notes []Note, err error) {
+	result := make([]Note, 0)
+	result = append(result, note)
+	latitude := *note.Latitude
+	longitude := *note.Longitude
+
+	notes, err = getAllNotes()
+	if err != nil {
+		return result, err
+	}
+
+	log.Println("Length of notes: ", len(notes))
+
+	for i := 0; i < len(notes); i++ {
+		distance := greatCircleDistance(latitude, longitude, *notes[i].Latitude, *notes[i].Longitude)
+		if distance <= radius {
+			result = append(result, notes[i])
+		}
+	}
+
+	return result, nil
+}
+
+func degToRadians(degrees float64) float64 {
+	return degrees * (math.Pi / 180.0)
+}
+
+//calculates shortest distance of two spherical co-ordinates in metres using Haversine formula
+func greatCircleDistance(plat1 float64, plong1 float64, plat2 float64, plong2 float64) float64 {
+	var EARTH_RADIUS float64 = 6371000 //metres
+	dLat := degToRadians(plat2 - plat1)
+	dLon := degToRadians(plong2 - plong1)
+
+	lat1 := degToRadians(plat1)
+	lat2 := degToRadians(plat2)
+
+	a1 := math.Sin(dLat/2) * math.Sin(dLat/2)
+	a2 := math.Sin(dLon/2) * math.Sin(dLon/2) * math.Cos(lat1) * math.Cos(lat2)
+
+	a := a1 + a2
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return EARTH_RADIUS * c
+}
+
+func randomRange(min int, max int) (result int) {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return rand.Intn(max-min) + min
+}
+
+/* Gets all notes in Notes table that have similar titles/comments */
+func GetNotesWithSimilarText(notes []Note) []Note {
+  result := make([]Note, 0)
+  comparatorNote := notes[0]
+	for i := 1; i < len(notes); i++ {
+    note := notes[i]
+    if (areSimilarStrings(*note.Title, *comparatorNote.Title)) {
+      result = append(result, notes[i])
+    }
+	}
+  if len(result) > 0 {
+    result = append(result, comparatorNote)
+  }
+	return result
+}
+
+func areSimilarStrings(s1 string, s2 string) bool {
+  if len(s1) != len(s2) {
+    return false
+  }
+  if len(s1) == 0 {
+    return true
+  }
+  s1, s2 = strings.Title(s1), strings.Title(s2)
+  c1, c2 := s1[0], s2[0]
+  if (c1 != c2) {
+    return false
+  }
+  for i := 1; i < len(s1); i++ {
+    if (s1[i] != s2[i]) {
+      return false
+    }
+  }
+  return true
 }

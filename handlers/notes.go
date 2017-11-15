@@ -147,7 +147,25 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 
+	if models.TimeForAggregate() {
+		//check range
+		var RANGE float64 = 50
+		notes, err := models.GetNotesWithinRange(RANGE, *note)
+		if err != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Failed to perform a filter of notes with a certain range",
+				err.Error(),
+			)
+			return
+		}
+    notes = models.GetNotesWithSimilarText(notes)
+    //notes, err = models.<adannas function>
+		log.Println(notes)
+	}
+	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
+
 }
 
 /*
