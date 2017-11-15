@@ -179,13 +179,6 @@ func TestInsertUser(t *testing.T) {
 }
 
 func TestGetNotesWithinRange(t *testing.T) {
-	longitude := 1.0
-	latitude := 2.0001
-
-	note := models.Note{
-		Longitude: &longitude,
-		Latitude:  &latitude,
-	}
 	db, mock := initMockDB(t)
 	defer db.Close()
 
@@ -197,7 +190,7 @@ func TestGetNotesWithinRange(t *testing.T) {
 	startTime := "2017-01-01 00:00"
 	endTime := "2017-05-05 00:00"
 	longitude := 1.0
-	latitude := 2.0
+	latitude := 2.0001
 	id := 7
 
 	users := []models.User{{Name: "Harry", Email: "beans.yeah@youwhat.not"}}
