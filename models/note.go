@@ -553,11 +553,9 @@ func GetNotesWithSimilarTags(notes []Note) (filtered []Note, err error) {
 	// lowerlist contains all tags similar to note i
 	// And then upperList[i] contains lowerlist
 
-	log.Println(len(notes))
+
 	for i := 0; i < len(notes); i++ {
 		for j := i + 1; j < len(notes); j++ {
-			log.Println(i)
-			log.Println(j)
 			similar, occ := notesHaveSimilarTags(notes[i], notes[j])
 			if similar {
 				noteOccurs := noteOccurs{note: notes[j], occurs: occ}
@@ -576,13 +574,16 @@ func GetNotesWithSimilarTags(notes []Note) (filtered []Note, err error) {
 		lowerList = nil
 	}
 
-   // Return maximum number of notes with similar tags
-	 lowerList = upperList[index_of_notes_similar]
-
-	 filtered = append(filtered, notes[index_of_notes_similar])
-	 for _, nList := range lowerList {
-		 filtered = append(filtered, nList.note)
-	 }
+	if(max_num_of_notes_similar > 0) {
+		// Return maximum number of notes with similar tags
+		lowerList = upperList[index_of_notes_similar]
+		filtered = append(filtered, notes[index_of_notes_similar])
+		for _, nList := range lowerList {
+			filtered = append(filtered, nList.note)
+		}
+	}
+	// else max_num_of_notes_similar = 0
+	// Every tag is different - so no notes are similar, so return empty struct
 
 	return filtered, nil
 }
