@@ -501,7 +501,7 @@ func GetNotesWithSimilarText(notes []Note) []Note {
     }
 	}
   if len(result) > 0 {
-    result = append(result, comparatorNote)
+    result = append([]Note{comparatorNote}, result...)
   }
 	return result
 }

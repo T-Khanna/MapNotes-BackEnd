@@ -230,6 +230,44 @@ func TestGetNotesWithinRange(t *testing.T) {
 
 }
 
+func TestGetSimilarTitles(t *testing.T) {
+    var c string = "Goodbye World"
+    var s = "test_start"
+    var e = "test_end"
+    var long float64 = 1.0
+    var lat float64 = 2.0
+    var id int = -1
+    var user models.User
+    user.Name = "beans"
+    users := []models.User{user}
+    tags := []string{}
+
+    title1 := "Hello"
+    title2 := "hello"
+    title3 := "goodbye"
+
+    note1 := models.Note{Title: &title1, Comment: &c, StartTime: &s, EndTime: &e,
+                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
+
+    note2 := models.Note{Title: &title2, Comment: &c, StartTime: &s, EndTime: &e,
+                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
+
+    note3 := models.Note{Title: &title3, Comment: &c, StartTime: &s, EndTime: &e,
+                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
+
+    var notes []models.Note = make([]models.Note, 3)
+    notes[0] = note1
+    notes[1] = note2
+    notes[2] = note3
+
+    filtered := models.GetNotesWithSimilarText(notes)
+
+    // Filtered should contain only note1 and note2 since both are the same
+    // title, just one has a title format while the other is lowercase
+    assert.Equal(t, len(filtered), 2)
+    assert.Equal(t, filtered[0], note1)
+    assert.Equal(t, filtered[1], note2)
+}
 
 func TestGetSimilarTags1(t *testing.T) {
 
