@@ -110,7 +110,6 @@ func createUser(user *User) (err error, id int64) {
 func deleteUser(email string) (err error) {
 
 	//TODO: make this function delete from the hashmap
-	//TODO: set up cascade deletes
 
 	stmt, err := db.Prepare("DELETE FROM users WHERE email = $1")
 

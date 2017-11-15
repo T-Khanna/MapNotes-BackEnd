@@ -55,17 +55,9 @@ func mergeNotes(oldIds []int64, newNote Note) {
 	deleteNotes(oldIds)
 	createNote(&newNote)
 
-	//so we get an array of ids of notes to delete, which will use cascades
-	//the cascades will handle all of the tags and users deletion
-	//the agg function will have already figured out who the users, tags and other attributes are for this new note
-	//then we just have to create a new note.
-
 }
 
 func deleteNotes(deleteids []int64) (err error) {
-
-	//delete all of the notes using deleteids
-	//TODO: Set up cascade deletes
 
 	for i := 0; i < len(deleteids); i++ {
 
@@ -220,9 +212,6 @@ func updateNote(note *Note) error {
 //Duplication here with DeleteUser
 func deleteNote(id int64) error {
 	stmt, prepErr := db.Prepare("DELETE FROM Notes WHERE id = $1")
-
-	//also need code to delete notestags entries and notesuser entries
-	//or set up cascade deletes in database?
 
 	if prepErr != nil {
 		return prepErr
