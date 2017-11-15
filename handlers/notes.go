@@ -22,7 +22,12 @@ func decodeNoteStruct(r *http.Request) (error, *models.Note) {
 	}
 	user := r.Context().Value(middlewares.UserContextKey{}).(models.User)
 
-	*note.Users = append(*note.Users, user)
+
+  if note.Users != nil {
+    *note.Users = append(*note.Users, user)
+  } else {
+		note.Users = &[]models.User{user}
+	}
 
 	return nil, &note
 }
