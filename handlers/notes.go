@@ -150,7 +150,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if models.TimeForAggregate() {
 		//check range
 		var RANGE float64 = 50
-		notes, err := models.GetNotesWithinRange(RANGE, *note.Latitude, *note.Longitude)
+		notes, err := models.GetNotesWithinRange(RANGE, *note)
 		if err != nil {
 			logAndRespondWithError(
 				w,
