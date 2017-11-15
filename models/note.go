@@ -12,6 +12,7 @@ import (
 	"sort"
 	"sync"
 	"time"
+  "strings"
 )
 
 //Struct to hold the insertion count
@@ -487,4 +488,40 @@ func greatCircleDistance(plat1 float64, plong1 float64, plat2 float64, plong2 fl
 func randomRange(min int, max int) (result int) {
 	rand.Seed(time.Now().UTC().UnixNano())
 	return rand.Intn(max-min) + min
+}
+
+/* Gets all notes in Notes table that have similar titles/comments */
+func GetNotesWithSimilarText(notes []Note) []Note {
+  result := make([]Note, 0)
+  comparatorNote := notes[0]
+	for i := 1; i < len(notes); i++ {
+    note := notes[i]
+    if (areSimilarStrings(*note.Title, *comparatorNote.Title)) {
+      result = append(result, notes[i])
+    }
+	}
+  if len(result) > 0 {
+    result = append(result, comparatorNote)
+  }
+	return result
+}
+
+func areSimilarStrings(s1 string, s2 string) bool {
+  if len(s1) != len(s2) {
+    return false
+  }
+  if len(s1) == 0 {
+    return true
+  }
+  s1, s2 = strings.Title(s1), strings.Title(s2)
+  c1, c2 := s1[0], s2[0]
+  if (c1 != c2) {
+    return false
+  }
+  for i := 1; i < len(s1); i++ {
+    if (s1[i] != s2[i]) {
+      return false
+    }
+  }
+  return true
 }

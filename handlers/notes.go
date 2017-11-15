@@ -159,6 +159,8 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			)
 			return
 		}
+    notes = models.GetNotesWithSimilarText(notes)
+    //notes, err = models.<adannas function>
 		log.Println(notes)
 	}
 	// Return { id: newId } as JSON.
