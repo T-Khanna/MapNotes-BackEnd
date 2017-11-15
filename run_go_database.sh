@@ -1,2 +1,2 @@
 go install
-heroku local
+heroku local web

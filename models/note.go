@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-         "sort"
 	_ "github.com/lib/pq"
 	"log"
 	"math"
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 )
@@ -132,7 +132,7 @@ func createNote(note *Note) (int64, error) {
 		}
 	}
 
-//Increment counter
+	//Increment counter
 	insertionNoteCounter.Lock()
 	insertionNoteCounter.counter += 1
 	insertionNoteCounter.Unlock()
@@ -283,21 +283,21 @@ func filterNotes(whereClause string) ([]Note, error) {
 type reverseChronologicalOrder []Note
 
 func (a reverseChronologicalOrder) Len() int {
-  return len(a)
+	return len(a)
 }
 
 func (a reverseChronologicalOrder) Swap(i, j int) {
-  a[i], a[j] = a[j], a[i]
+	a[i], a[j] = a[j], a[i]
 }
 
 func (a reverseChronologicalOrder) Less(i, j int) bool {
-    if *a[i].StartTime > *a[j].StartTime {
-       return true
-    }
-    if *a[i].StartTime < *a[j].StartTime {
-       return false
-    }
-    return *a[i].EndTime > *a[j].EndTime
+	if *a[i].StartTime > *a[j].StartTime {
+		return true
+	}
+	if *a[i].StartTime < *a[j].StartTime {
+		return false
+	}
+	return *a[i].EndTime > *a[j].EndTime
 }
 
 /**
@@ -315,7 +315,7 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 
 	// Iterate over the notesWithUsersRows, populating notesById and each note's
 	// users field.
-  var emptyNote Note
+	var emptyNote Note
 	var note Note
 	var user User
 
@@ -338,13 +338,14 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 
 		// If not already hit this note, add it to the map and initialise its users.
 		// Else, get the note from the map and add this user to its users.
-		notesWithUsers := notesById[*note.Id]
-		if notesWithUsers == emptyNote {
+		noteWithUsers := notesById[*note.Id]
+		if noteWithUsers == emptyNote {
 			note.Users = &[]User{user}
 			notesById[*note.Id] = note
 		} else {
-			noteUsers := notesWithUsers.Users
+			noteUsers := noteWithUsers.Users
 			*noteUsers = append(*noteUsers, user)
+			notesById[*note.Id] = noteWithUsers
 		}
 	}
 
@@ -362,10 +363,17 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 		if noteWithUsers == emptyNote {
 			// FIXME: wtf why is this happening?
 			log.Printf("Error in models.rowsToResults(): Found note with tag but not user: %+v", note)
+		} else if tag == nil && noteWithUsers.Tags == nil {
+			var emptyTags []string = make([]string, 0)
+			noteWithUsers.Tags = &emptyTags
+			//noteWithUsers.Tags = &[]string{}
 		} else if tag != nil && noteWithUsers.Tags == nil {
 			noteWithUsers.Tags = &[]string{*tag}
 		} else if tag != nil {
 			*noteWithUsers.Tags = append(*noteWithUsers.Tags, *tag)
+		}
+		if noteWithUsers != emptyNote {
+			notesById[*note.Id] = noteWithUsers
 		}
 	}
 
@@ -374,11 +382,13 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 	//        over all notes?
 	var notes []Note = make([]Note, 0)
 	for _, note := range notesById {
+		if note.Tags == nil {
+		}
 		notes = append(notes, note)
 	}
 
-  // Sorting notes
-  sort.Sort(reverseChronologicalOrder(notes))
+	// Sorting notes
+	sort.Sort(reverseChronologicalOrder(notes))
 
 	return notes, nil
 }
@@ -409,9 +419,8 @@ func printNote(n Note) {
 	log.Println(*n.Latitude)
 	log.Println(*n.Id)
 	log.Println(*n.Users)
+	log.Println(*n.Tags)
 }
-
-
 
 func TimeForAggregate() bool {
 	var valid bool = false
@@ -436,6 +445,8 @@ func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (n
 	if err != nil {
 		return result, err
 	}
+
+	log.Println("Length of notes: ", len(notes))
 
 	for i := 0; i < len(notes); i++ {
 		distance := greatCircleDistance(latitude, longitude, *notes[i].Latitude, *notes[i].Longitude)
