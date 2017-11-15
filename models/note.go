@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 )
@@ -34,7 +35,7 @@ type Note struct {
 	Longitude *float64  `json:"longitude,omitempty"`
 	Latitude  *float64  `json:"latitude,omitempty"`
 	Id        *int      `json:"id,omitempty"`
-	Users     *[]string `json:"users,omitempty"`
+	Users     *[]User   `json:"users,omitempty"`
 	Tags      *[]string `json:"tags,omitempty"`
 }
 
@@ -47,6 +48,7 @@ type NoteOperations struct {
 	Create          func(*Note) (int64, error)
 	Update          func(*Note) error
 	Delete          func(int64) error
+	Merge           func([]int64, Note)
 }
 
 // Exported API. Use as models.Notes.Create(..)
@@ -60,6 +62,32 @@ var Notes = NoteOperations{
 	Create:          createNote,
 	Update:          updateNote,
 	Delete:          deleteNote,
+	Merge:           mergeNotes,
+}
+
+func mergeNotes(oldIds []int64, newNote Note) {
+
+	deleteNotes(oldIds)
+	createNote(&newNote)
+
+}
+
+func deleteNotes(deleteids []int64) (err error) {
+
+	for i := 0; i < len(deleteids); i++ {
+
+		err = deleteNote(deleteids[i])
+
+		if err != nil {
+
+			return
+
+		}
+
+	}
+
+	return
+
 }
 
 func createNote(note *Note) (int64, error) {
@@ -91,6 +119,19 @@ func createNote(note *Note) (int64, error) {
 		}
 	}
 
+	users := note.Users
+
+	for _, u := range *users {
+
+		_, uid := GetUserId(u)
+
+		err := NotesUsers.Insert(id, uid)
+
+		if err != nil {
+			return -1, err
+		}
+	}
+
 	//Increment counter
 	insertionNoteCounter.Lock()
 	insertionNoteCounter.counter += 1
@@ -101,17 +142,17 @@ func createNote(note *Note) (int64, error) {
 
 func updateNote(note *Note) error {
 	/*
-	   To implement partial updates:
+	  To implement partial updates:
 
-	   The fields of the Note struct must be pointers, so that they we can
-	   distinguish when they've been ommitted from the JSON by checking if the
-	   pointer is nil.
+	  The fields of the Note struct must be pointers, so that they we can
+	  distinguish when they've been ommitted from the JSON by checking if the
+	  pointer is nil.
 
-	   To dynamically construct the query based on what columns are included, uses a
-	   bunch of if statements that check if a column is present and, if so, appends
-	   "column name = $n" to the byte buffer.
+	  To dynamically construct the query based on what columns are included, uses a
+	  bunch of if statements that check if a column is present and, if so, appends
+	  "column name = $n" to the byte buffer.
 
-	   Uses a byte buffer to avoid re-concatenating strings over and over.
+	  Uses a byte buffer to avoid re-concatenating strings over and over.
 	*/
 
 	if note.Id == nil {
@@ -205,28 +246,149 @@ func deleteNote(id int64) error {
 	return nil
 }
 
-func filterNotes(filter string) ([]Note, error) {
-	query := fmt.Sprintf(`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, name, tag
-                FROM notes as n
-                JOIN notesusers as nu ON n.id = nu.note_id
-                JOIN users as u ON nu.user_id = u.id
-                LEFT JOIN notestags as nt
-                ON n.id = nt.note_id
-                LEFT JOIN tags as t
-                ON t.id = nt.tag_id %s`, filter)
+func filterNotes(whereClause string) ([]Note, error) {
+	notesWithUsersQuery := fmt.Sprintf(
+		`SELECT comments, title, n.id, startTime, endTime, longitude, latitude, u.id, u.name, u.email
+    FROM notes as n
+    JOIN notesusers as nu ON n.id = nu.note_id
+    JOIN users as u ON nu.user_id = u.id
+    %s`, whereClause,
+	)
 
-	rows, err := db.Query(query)
+	notesWithTagsQuery := fmt.Sprintf(
+		`SELECT n.id, t.tag
+    FROM notes as n
+    LEFT JOIN notestags as nt ON n.id = nt.note_id
+    LEFT JOIN tags as t ON nt.tag_id = t.id
+    %s`, whereClause,
+	)
 
-	if err != nil {
-		return nil, err
+	// Get rows of (...note, ...user)
+	notesWithUsersRows, uErr := db.Query(notesWithUsersQuery)
+	if uErr != nil {
+		return nil, uErr
+	}
+	defer notesWithUsersRows.Close()
+
+	// Get rows of (note.id, tag)
+	notesWithTagsRows, tErr := db.Query(notesWithTagsQuery)
+	if tErr != nil {
+		return nil, tErr
+	}
+	defer notesWithTagsRows.Close()
+
+	return rowsToNotes(notesWithUsersRows, notesWithTagsRows)
+}
+
+type reverseChronologicalOrder []Note
+
+func (a reverseChronologicalOrder) Len() int {
+	return len(a)
+}
+
+func (a reverseChronologicalOrder) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a reverseChronologicalOrder) Less(i, j int) bool {
+	if *a[i].StartTime > *a[j].StartTime {
+		return true
+	}
+	if *a[i].StartTime < *a[j].StartTime {
+		return false
+	}
+	return *a[i].EndTime > *a[j].EndTime
+}
+
+/**
+ * Takes rows of (...note, ...user) and (note.id, tag) and constructs a slice
+ * of note objects with the tag and user arrays filled in.
+ */
+func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]Note, error) {
+	/*
+	   Loop over notes with users, populating each note's Users field. As this is
+	   done, insert the notes into a hash map by their id. When iterating over
+	   notes with tags, insert the tags into the note struct taken from the map
+	   with the correct id.
+	*/
+	notesById := make(map[int]Note)
+
+	// Iterate over the notesWithUsersRows, populating notesById and each note's
+	// users field.
+	var emptyNote Note
+	var note Note
+	var user User
+
+	for notesWithUsersRows.Next() {
+		err := notesWithUsersRows.Scan(
+			&note.Comment,
+			&note.Title,
+			&note.Id,
+			&note.StartTime,
+			&note.EndTime,
+			&note.Longitude,
+			&note.Latitude,
+			&user.Id,
+			&user.Name,
+			&user.Email,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// If not already hit this note, add it to the map and initialise its users.
+		// Else, get the note from the map and add this user to its users.
+		noteWithUsers := notesById[*note.Id]
+		if noteWithUsers == emptyNote {
+			note.Users = &[]User{user}
+			notesById[*note.Id] = note
+		} else {
+			noteUsers := noteWithUsers.Users
+			*noteUsers = append(*noteUsers, user)
+			notesById[*note.Id] = noteWithUsers
+		}
 	}
 
-	defer rows.Close()
-	notes, convErr := convertResultToNotes(rows)
+	// Iterate over notes with tags rows, adding tags to the notes from the map,
+	// whose Users field has been created.
+	var tag *string
+	for notesWithTagsRows.Next() {
+		err := notesWithTagsRows.Scan(&note.Id, &tag)
+		if err != nil {
+			return nil, err
+		}
 
-	if convErr != nil {
-		return nil, convErr
+		// If tags not yet constructed, construct it, else append.
+		noteWithUsers := notesById[*note.Id]
+		if noteWithUsers == emptyNote {
+			// FIXME: wtf why is this happening?
+			log.Printf("Error in models.rowsToResults(): Found note with tag but not user: %+v", note)
+		} else if tag == nil && noteWithUsers.Tags == nil {
+			var emptyTags []string = make([]string, 0)
+			noteWithUsers.Tags = &emptyTags
+			//noteWithUsers.Tags = &[]string{}
+		} else if tag != nil && noteWithUsers.Tags == nil {
+			noteWithUsers.Tags = &[]string{*tag}
+		} else if tag != nil {
+			*noteWithUsers.Tags = append(*noteWithUsers.Tags, *tag)
+		}
+		if noteWithUsers != emptyNote {
+			notesById[*note.Id] = noteWithUsers
+		}
 	}
+
+	// Convert map to slice
+	// FIXME: Is there a way to do this without required this extra iteration
+	//        over all notes?
+	var notes []Note = make([]Note, 0)
+	for _, note := range notesById {
+		if note.Tags == nil {
+		}
+		notes = append(notes, note)
+	}
+
+	// Sorting notes
+	sort.Sort(reverseChronologicalOrder(notes))
 
 	return notes, nil
 }
@@ -257,44 +419,7 @@ func printNote(n Note) {
 	log.Println(*n.Latitude)
 	log.Println(*n.Id)
 	log.Println(*n.Users)
-}
-
-func convertResultToNotes(rows *sql.Rows) ([]Note, error) {
-	list := make([]Note, 0)
-	var fstNote *Note = nil
-	for rows.Next() {
-		var n Note
-		var currentUser *string
-		var currentTag *string
-		err := rows.Scan(&n.Comment, &n.Title, &n.Id, &n.StartTime, &n.EndTime,
-			&n.Longitude, &n.Latitude, &currentUser, &currentTag)
-		if err != nil {
-			return nil, err
-		}
-		userarr := make([]string, 0)
-		tagarr := make([]string, 0)
-		n.Users = &userarr
-		n.Tags = &tagarr
-		if currentUser != nil {
-			*n.Users = append(*n.Users, *currentUser)
-		}
-		if currentTag != nil {
-			*n.Tags = append(*n.Tags, *currentTag)
-		}
-		if fstNote == nil {
-			fstNote = &n
-		} else if *(*fstNote).Id == *n.Id {
-			*fstNote.Tags = append(*fstNote.Tags, *n.Tags...)
-		} else {
-			list = append(list, *fstNote)
-			fstNote = &n
-		}
-	}
-	if fstNote != nil {
-		list = append(list, *fstNote)
-	}
-	//log.Println(len(list))
-	return list, nil
+	log.Println(*n.Tags)
 }
 
 func TimeForAggregate() bool {
@@ -320,6 +445,8 @@ func GetNotesWithinRange(radius float64, latitude float64, longitude float64) (n
 	if err != nil {
 		return result, err
 	}
+
+	log.Println("Length of notes: ", len(notes))
 
 	for i := 0; i < len(notes); i++ {
 		distance := greatCircleDistance(latitude, longitude, *notes[i].Latitude, *notes[i].Longitude)
