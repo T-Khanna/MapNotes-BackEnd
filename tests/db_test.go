@@ -240,7 +240,9 @@ func TestGetSimilarTags1(t *testing.T) {
     var long float64 = 1.0
     var lat float64 = 2.0
     var id int = -1
-    users := []string{"u11"}
+    var user models.User
+    user.Name = "u11"
+    users := []models.User{user}
     tags1 := []string{"tag1", "tag2", "tag3"}
 
     note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
@@ -282,7 +284,9 @@ func TestGetSimilarTags2(t *testing.T) {
     var long float64 = 1.0
     var lat float64 = 2.0
     var id int = -1
-    users := []string{"u11"}
+    var user models.User
+    user.Name = "u11"
+    users := []models.User{user}
 
     tags1 := []string{"tag1", "tag2", "tag3"}
     note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
@@ -335,7 +339,10 @@ func TestGetSimilarTags3(t *testing.T) {
     var long float64 = 1.0
     var lat float64 = 2.0
     var id int = -1
-    users := []string{"u11"}
+    var user models.User
+    user.Name = "u11"
+    users := []models.User{user}
+
 
     tags1 := []string{"tag1"}
     note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
