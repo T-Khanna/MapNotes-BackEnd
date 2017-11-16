@@ -231,185 +231,181 @@ func TestGetNotesWithinRange(t *testing.T) {
 }
 
 func TestGetSimilarTitles(t *testing.T) {
-    var c string = "Goodbye World"
-    var s = "test_start"
-    var e = "test_end"
-    var long float64 = 1.0
-    var lat float64 = 2.0
-    var id int = -1
-    var user models.User
-    user.Name = "beans"
-    users := []models.User{user}
-    tags := []string{}
+	var c string = "Goodbye World"
+	var s = "test_start"
+	var e = "test_end"
+	var long float64 = 1.0
+	var lat float64 = 2.0
+	var id int = -1
+	var user models.User
+	user.Name = "beans"
+	users := []models.User{user}
+	tags := []string{}
 
-    title1 := "Hello"
-    title2 := "hello"
-    title3 := "goodbye"
+	title1 := "Hello"
+	title2 := "hello"
+	title3 := "goodbye"
 
-    note1 := models.Note{Title: &title1, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
+	note1 := models.Note{Title: &title1, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
 
-    note2 := models.Note{Title: &title2, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
+	note2 := models.Note{Title: &title2, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
 
-    note3 := models.Note{Title: &title3, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
+	note3 := models.Note{Title: &title3, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags}
 
-    var notes []models.Note = make([]models.Note, 3)
-    notes[0] = note1
-    notes[1] = note2
-    notes[2] = note3
+	var notes []models.Note = make([]models.Note, 3)
+	notes[0] = note1
+	notes[1] = note2
+	notes[2] = note3
 
-    filtered := models.GetNotesWithSimilarText(notes)
+	filtered := models.GetNotesWithSimilarText(notes)
 
-    // Filtered should contain only note1 and note2 since both are the same
-    // title, just one has a title format while the other is lowercase
-    assert.Equal(t, len(filtered), 2)
-    assert.Equal(t, filtered[0], note1)
-    assert.Equal(t, filtered[1], note2)
+	// Filtered should contain only note1 and note2 since both are the same
+	// title, just one has a title format while the other is lowercase
+	assert.Equal(t, len(filtered), 2)
+	assert.Equal(t, filtered[0], note1)
+	assert.Equal(t, filtered[1], note2)
 }
 
 func TestGetSimilarTags1(t *testing.T) {
 
-    var title string = "Test title"
-    var c string = "test comment"
-    var s = "test_start"
-    var e = "test_end"
-    var long float64 = 1.0
-    var lat float64 = 2.0
-    var id int = -1
-    var user models.User
-    user.Name = "u11"
-    users := []models.User{user}
-    tags1 := []string{"tag1", "tag2", "tag3"}
+	var title string = "Test title"
+	var c string = "test comment"
+	var s = "test_start"
+	var e = "test_end"
+	var long float64 = 1.0
+	var lat float64 = 2.0
+	var id int = -1
+	var user models.User
+	user.Name = "u11"
+	users := []models.User{user}
+	tags1 := []string{"tag1", "tag2", "tag3"}
 
-    note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags1}
+	note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags1}
 
-    tags2 := []string{"tag1", "tag4"}
+	tags2 := []string{"tag1", "tag4"}
 
-    note2 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags2}
+	note2 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags2}
 
-    tags3 := []string{"tag5", "tag6"}
+	tags3 := []string{"tag5", "tag6"}
 
-    note3 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                        Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags3}
+	note3 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags3}
 
-    var notes []models.Note = make([]models.Note, 3)
-    notes[0] = note1
-    notes[1] = note2
-    notes[2] = note3
+	var notes []models.Note = make([]models.Note, 3)
+	notes[0] = note1
+	notes[1] = note2
+	notes[2] = note3
 
-    filtered, err := models.GetNotesWithSimilarTags(notes)
+	filtered, err := models.GetNotesWithSimilarTags(notes)
 
-    if(err != nil) {
-        t.Errorf("Function: GetNotesWithSimilarTags threw an error: %s", err)
-    }
+	if err != nil {
+		t.Errorf("Function: GetNotesWithSimilarTags threw an error: %s", err)
+	}
 
-    //filtered should contain only note1 and note2 since both are similar
-    assert.Equal(t, len(filtered), 2)
-    assert.Equal(t, filtered[0], note1)
-    assert.Equal(t, filtered[1], note2)
+	//filtered should contain only note1 and note2 since both are similar
+	assert.Equal(t, len(filtered), 2)
+	assert.Equal(t, filtered[0], note1)
+	assert.Equal(t, filtered[1], note2)
 }
 
 func TestGetSimilarTags2(t *testing.T) {
 
-    var title string = "Test title"
-    var c string = "test comment"
-    var s = "test_start"
-    var e = "test_end"
-    var long float64 = 1.0
-    var lat float64 = 2.0
-    var id int = -1
-    var user models.User
-    user.Name = "u11"
-    users := []models.User{user}
+	var title string = "Test title"
+	var c string = "test comment"
+	var s = "test_start"
+	var e = "test_end"
+	var long float64 = 1.0
+	var lat float64 = 2.0
+	var id int = -1
+	var user models.User
+	user.Name = "u11"
+	users := []models.User{user}
 
-    tags1 := []string{"tag1", "tag2", "tag3"}
-    note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags1}
+	tags1 := []string{"tag1", "tag2", "tag3"}
+	note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags1}
 
-    tags2 := []string{"tag1", "tag4"}
-    note2 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags2}
+	tags2 := []string{"tag1", "tag4"}
+	note2 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags2}
 
-    tags3 := []string{"tag5", "tag6"}
-    note3 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                        Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags3}
+	tags3 := []string{"tag5", "tag6"}
+	note3 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags3}
 
-		tags4 := []string{"tag6", "tag7", "tag8"}
-		note4 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-										    Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags4}
+	tags4 := []string{"tag6", "tag7", "tag8"}
+	note4 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags4}
 
-		tags5 := []string{"tag1", "tag6"}
-		note5 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-												Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags5}
+	tags5 := []string{"tag1", "tag6"}
+	note5 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags5}
 
+	var notes []models.Note = make([]models.Note, 5)
+	notes[0] = note1
+	notes[1] = note2
+	notes[2] = note3
+	notes[3] = note4
+	notes[4] = note5
 
-    var notes []models.Note = make([]models.Note, 5)
-    notes[0] = note1
-    notes[1] = note2
-    notes[2] = note3
-		notes[3] = note4
-		notes[4] = note5
+	filtered, err := models.GetNotesWithSimilarTags(notes)
 
-    filtered, err := models.GetNotesWithSimilarTags(notes)
+	if err != nil {
+		t.Errorf("Function: GetNotesWithSimilarTags threw an error: %s", err)
+	}
 
-    if(err != nil) {
-        t.Errorf("Function: GetNotesWithSimilarTags threw an error: %s", err)
-    }
-
-    //filtered should contain only note3, note4 and note2 because tag6 is the tag
-		// that occurs the most across all the notes.
-    assert.Equal(t, len(filtered), 3)
-    assert.Equal(t, filtered[0], note3)
-    assert.Equal(t, filtered[1], note4)
-		assert.Equal(t, filtered[2], note5)
+	//filtered should contain only note3, note4 and note2 because tag6 is the tag
+	// that occurs the most across all the notes.
+	assert.Equal(t, len(filtered), 3)
+	assert.Equal(t, filtered[0], note3)
+	assert.Equal(t, filtered[1], note4)
+	assert.Equal(t, filtered[2], note5)
 }
 
 func TestGetSimilarTags3(t *testing.T) {
 
-    var title string = "Test title"
-    var c string = "test comment"
-    var s = "test_start"
-    var e = "test_end"
-    var long float64 = 1.0
-    var lat float64 = 2.0
-    var id int = -1
-    var user models.User
-    user.Name = "u11"
-    users := []models.User{user}
+	var title string = "Test title"
+	var c string = "test comment"
+	var s = "test_start"
+	var e = "test_end"
+	var long float64 = 1.0
+	var lat float64 = 2.0
+	var id int = -1
+	var user models.User
+	user.Name = "u11"
+	users := []models.User{user}
 
+	tags1 := []string{"tag1"}
+	note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags1}
 
-    tags1 := []string{"tag1"}
-    note1 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags1}
+	tags2 := []string{"tag2"}
+	note2 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags2}
 
-    tags2 := []string{"tag2"}
-    note2 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                         Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags2}
+	tags3 := []string{"tag3"}
+	note3 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
+		Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags3}
 
-    tags3 := []string{"tag3"}
-    note3 := models.Note{Title: &title, Comment: &c, StartTime: &s, EndTime: &e,
-                        Longitude: &long, Latitude: &lat, Id: &id, Users: &users, Tags: &tags3}
+	var notes []models.Note = make([]models.Note, 3)
+	notes[0] = note1
+	notes[1] = note2
+	notes[2] = note3
 
-    var notes []models.Note = make([]models.Note, 3)
-    notes[0] = note1
-    notes[1] = note2
-    notes[2] = note3
+	filtered, err := models.GetNotesWithSimilarTags(notes)
 
-    filtered, err := models.GetNotesWithSimilarTags(notes)
+	if err != nil {
+		t.Errorf("Function: GetNotesWithSimilarTags threw an error: %s", err)
+	}
 
-    if(err != nil) {
-        t.Errorf("Function: GetNotesWithSimilarTags threw an error: %s", err)
-    }
-
-    //filtered should not contain any notes,because no notes have the same tags
-    assert.Equal(t, len(filtered), 0)
+	//filtered should not contain any notes,because no notes have the same tags
+	assert.Equal(t, len(filtered), 0)
 }
-
-
 
 type DeleteFunc func(int64) error
 
@@ -436,6 +432,9 @@ func testDelete(tableName string, t *testing.T, deleter DeleteFunc) {
 	}
 
 }
+
+//------------------------------------------------------------------------------------------------------------------------------
+//Test helper methods
 
 func initMockDB(t *testing.T) (db *sql.DB, mock sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()

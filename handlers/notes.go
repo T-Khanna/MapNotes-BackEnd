@@ -22,10 +22,9 @@ func decodeNoteStruct(r *http.Request) (error, *models.Note) {
 	}
 	user := r.Context().Value(middlewares.UserContextKey{}).(models.User)
 
-
-  if note.Users != nil {
-    *note.Users = append(*note.Users, user)
-  } else {
+	if note.Users != nil {
+		*note.Users = append(*note.Users, user)
+	} else {
 		note.Users = &[]models.User{user}
 	}
 
@@ -146,7 +145,6 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-
 	if models.TimeForAggregate() {
 		//check range
 		var RANGE float64 = 50
@@ -159,19 +157,19 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			)
 			return
 		}
-    notes = models.GetNotesWithSimilarText(notes)
-    notes, err = models.GetNotesWithSimilarTags(notes)
+		notes = models.GetNotesWithSimilarText(notes)
+		notes, err = models.GetNotesWithSimilarTags(notes)
 		if err != nil {
 			logAndRespondWithError(
 				w,
-				"Error: Failed to perform a filter of notes by their tags",
+				"Error: Failed to perform an aggregation of notes by their tags",
 				err.Error(),
 			)
 			return
 		}
 		log.Println(notes)
-    //TODO: Need to pass notes variable into second and third functions
-    //      in aggregation chain
+		//TODO: Need to pass notes variable into second and third functions
+		//      in aggregation chain
 	}
 	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
