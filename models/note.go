@@ -19,13 +19,14 @@ import (
 type SynchronisedNoteCounter struct {
 	sync.RWMutex
 	counter int
+	target  int
 }
 
 /*
   A counter that is used to keep track of how many notes we have inserted
   during the run time of the server.
 */
-var insertionNoteCounter = SynchronisedNoteCounter{counter: 0}
+var insertionNoteCounter = SynchronisedNoteCounter{counter: 0, target: 2}
 
 // TODO: Change to StartTime and EndTime, and add json tags in camel case.
 type Note struct {
@@ -426,11 +427,12 @@ func printNote(n Note) {
 	log.Println(*n.Tags)
 }
 
-func TimeForAggregate() bool {
+func TimeForAggregation() bool {
 	var valid bool = false
 	insertionNoteCounter.Lock()
-	if insertionNoteCounter.counter == 3 {
-		insertionNoteCounter.counter = randomRange(1, 5)
+	if insertionNoteCounter.counter == insertionNoteCounter.target {
+		insertionNoteCounter.target = randomRange(1, 5)
+		insertionNoteCounter.counter = 0
 		valid = true
 	}
 	insertionNoteCounter.Unlock()
@@ -493,7 +495,7 @@ func randomRange(min int, max int) (result int) {
 
 /* Gets all notes in the list that occur around the same time as the head of
 the list
-Policy - Get notes where start time and end time are within 10 mins of each
+Policy - Get notes where start time and end time are within 15 mins of each
          other
 */
 func GetAllNotesAroundSameTime(notes []Note) (filter []Note, err error) {
@@ -502,30 +504,39 @@ func GetAllNotesAroundSameTime(notes []Note) (filter []Note, err error) {
 		filterErr := fmt.Errorf("Empty notes list was passed to GetAllNotesAroundSameTime")
 		return result, filterErr
 	}
+
+	//Add original new note
 	newNote := notes[0]
 
 	for i := 0; i < len(notes); i++ {
-		if withinTimeFrame(*notes[i].StartTime, *newNote.StartTime, 15*60) {
-
+		if withinTimeFrame(*notes[i].StartTime, *newNote.StartTime, 15*60) &&
+			withinTimeFrame(*notes[i].EndTime, *newNote.EndTime, 15*60) {
+			result = append(result, notes[i])
 		}
 	}
 	return result, nil
 }
 
+/*
+  Checks if two dates are within a time frame of each other
+  t1 - First date
+  t2 - Second date
+  dt - time frame in seconds
+*/
 func withinTimeFrame(t1 string, t2 string, dt int64) bool {
 	format := "2006-01-02 15:04:05"
 	pT1, err := time.Parse(format, t1)
 	if err != nil {
-		fmt.Println("Error parsing time t1 ", t1)
-		fmt.Println(err)
+		log.Println("Error parsing time t1 ", t1)
+		log.Println(err)
 	}
 	pT2, err := time.Parse(format, t2)
 	if err != nil {
-		fmt.Println("Error parsing time t2 ", t2)
-		fmt.Println(err)
+		log.Println("Error parsing time t2 ", t2)
+		log.Println(err)
 	}
 	absDiff := time.Duration(math.Abs(float64(pT1.Sub(pT2)))) * time.Nanosecond
-	fmt.Println(absDiff)
+	log.Println(absDiff)
 	return absDiff < time.Duration(dt)*time.Second
 }
 
@@ -654,25 +665,34 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note *Note) {
 		return []int64{}, nil
 	}
 
+	for i := 0; i < length; i++ {
+		note_ids = append(note_ids, int64(*notes[i].Id))
+	}
+
 	var n Note
 	*n.Title = aggregateTitle(notes)
 	*n.Comment = aggregateComments(notes, length)
 	lat, long := aggregateCoordinates(notes, length)
 	*n.Latitude = lat
 	*n.Longitude = long
+	startTime, endTime := aggregateTimes(notes, length)
+	*n.StartTime = startTime
+	*n.EndTime = endTime
+	*n.Users = aggregateUsers(notes, length)
+	*n.Tags = aggregateTags(notes, length)
 
-	return note_ids, nil
+	return note_ids, &n
 }
 
 //Our policy for title aggregation
-func aggregateTitle(notes []Note) (s string) {
+func aggregateTitle(notes []Note) string {
 	//Takes the first note's title. Every note must contain a title so we can
 	//do this
 	return *notes[0].Title
 }
 
 //Our policy for comments aggregation
-func aggregateComments(notes []Note, length int) (s string) {
+func aggregateComments(notes []Note, length int) string {
 	//Takes the first comment we find
 	i := 0
 	for *notes[i].Comment == "" && i < length {
@@ -698,5 +718,89 @@ func aggregateCoordinates(notes []Note, length int) (lat float64, long float64) 
 	}
 	lat = accLat / float64(length)
 	long = accLong / float64(length)
+	return
+}
+
+type dateSlice []Date
+
+func (p dateSlice) Len() int {
+	return len(p)
+}
+
+func (p dateSlice) Less(i, j int) bool {
+	return p[i].time.Before(p[j].time)
+}
+
+func (p dateSlice) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+type Date struct {
+	str  string
+	time time.Time
+}
+
+func aggregateTimes(notes []Note, length int) (finalStartTime string, finalEndTime string) {
+	format := "2006-01-02 15:04:05"
+
+	//Sort the time and select the median
+	startTimes := make([]Date, 0)
+	endTimes := make([]Date, 0)
+	for i := 0; i < length; i++ {
+		startTime, _ := time.Parse(format, *notes[i].StartTime)
+		date := Date{str: *notes[i].StartTime, time: startTime}
+		startTimes = append(startTimes, date)
+		endTime, _ := time.Parse(format, *notes[i].EndTime)
+		date = Date{str: *notes[i].EndTime, time: endTime}
+		endTimes = append(endTimes, date)
+	}
+	return medianTimes(startTimes), medianTimes(endTimes)
+}
+
+func medianTimes(dates []Date) string {
+	length := len(dates)
+	sort.Sort(dateSlice(dates))
+	if length%2 == 0 {
+		lowerBound := dates[length/2-1]
+		upperBound := dates[length/2]
+		diff := upperBound.time.Sub(lowerBound.time)
+		halfDur := diff / 2
+		median := lowerBound.time.Add(halfDur)
+		format := "2006-01-02 15:04:05"
+		return median.Format(format)
+	} else {
+		return dates[length/2].str
+	}
+}
+
+//Our policy for aggregating users
+func aggregateUsers(notes []Note, length int) (users []User) {
+	//Combine all distinct users
+	seenSet := make(map[User]struct{})
+	for i := 0; i < length; i++ {
+		for j := 0; j < len(*notes[i].Users); j++ {
+			_, found := seenSet[(*notes[i].Users)[j]]
+			if !found {
+				users = append(users, (*notes[i].Users)[j])
+				seenSet[(*notes[i].Users)[j]] = struct{}{}
+			}
+		}
+	}
+	return
+}
+
+//Our policy for aggregating tags
+func aggregateTags(notes []Note, length int) (tags []string) {
+	//Combine all distinct tags
+	seenSet := make(map[string]struct{})
+	for i := 0; i < length; i++ {
+		for j := 0; j < len(*notes[i].Tags); j++ {
+			_, found := seenSet[(*notes[i].Tags)[j]]
+			if !found {
+				tags = append(tags, (*notes[i].Tags)[j])
+				seenSet[(*notes[i].Tags)[j]] = struct{}{}
+			}
+		}
+	}
 	return
 }

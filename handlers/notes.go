@@ -145,14 +145,22 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if models.TimeForAggregate() {
-		//check range
+	if models.TimeForAggregation() {
 		var RANGE float64 = 50
 		notes, err := models.GetNotesWithinRange(RANGE, *note)
 		if err != nil {
 			logAndRespondWithError(
 				w,
 				"Error: Failed to perform a filter of notes with a certain range",
+				err.Error(),
+			)
+			return
+		}
+		notes, err = models.GetAllNotesAroundSameTime(notes)
+		if err != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Failed to perform a filter of notes by a certain timeframe",
 				err.Error(),
 			)
 			return
