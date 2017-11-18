@@ -36,7 +36,7 @@ type Note struct {
 	EndTime   *string   `json:"end_time,omitempty"`
 	Longitude *float64  `json:"longitude,omitempty"`
 	Latitude  *float64  `json:"latitude,omitempty"`
-	Id        *int      `json:"id,omitempty"`
+	Id        *int64    `json:"id,omitempty"`
 	Users     *[]User   `json:"users,omitempty"`
 	Tags      *[]string `json:"tags,omitempty"`
 }
@@ -50,7 +50,7 @@ type NoteOperations struct {
 	Create          func(*Note) (int64, error)
 	Update          func(*Note) error
 	Delete          func(int64) error
-	Merge           func([]int64, Note)
+	Merge           func([]int64, Note) (int64, error)
 }
 
 // Exported API. Use as models.Notes.Create(..)
@@ -67,10 +67,10 @@ var Notes = NoteOperations{
 	Merge:           mergeNotes,
 }
 
-func mergeNotes(oldIds []int64, newNote Note) {
+func mergeNotes(oldIds []int64, newNote Note) (int64, error) {
 
 	deleteNotes(oldIds)
-	createNote(&newNote)
+	return createNote(&newNote)
 
 }
 
@@ -316,7 +316,7 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 	   notes with tags, insert the tags into the note struct taken from the map
 	   with the correct id.
 	*/
-	notesById := make(map[int]Note)
+	notesById := make(map[int64]Note)
 
 	// Iterate over the notesWithUsersRows, populating notesById and each note's
 	// users field.
@@ -658,13 +658,13 @@ func notesHaveSimilarTags(n Note, m Note) (bool, int) {
 	return similar, num_common
 }
 
-func ConstructAggregatedNote(notes []Note) (note_ids []int64, note *Note) {
+/*Returns a list of note ids and a new note using predefined policies
+  notes - list of notes to be aggregated. Must not be empty
+*/
+func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	length := len(notes)
-	if length == 0 {
-		return []int64{}, nil
-	}
-
 	for i := 0; i < length; i++ {
+
 		note_ids = append(note_ids, int64(*notes[i].Id))
 	}
 
@@ -680,7 +680,7 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note *Note) {
 	n.Users = aggregateUsers(notes, length)
 	n.Tags = aggregateTags(notes, length)
 
-	return note_ids, &n
+	return note_ids, n
 }
 
 //Our policy for title aggregation

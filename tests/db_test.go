@@ -24,7 +24,7 @@ func TestInsertNote(t *testing.T) {
 	var timestamp = jodaTime.Format("YYYY-MM-dd HH:mm", time.Now())
 	var longitude float64 = 1.0
 	var latitude float64 = 2.0
-	var id int = -1
+	var id int64 = -1
 	//var email string = "test@mapnotes.co.uk"
 
 	//Input string will be converted into a regex
@@ -195,7 +195,7 @@ func TestGetNotesWithinRange(t *testing.T) {
 	endTime := "2017-05-05 00:00"
 	longitude := 1.0
 	latitude := 2.0001
-	id := 7
+	var id int64 = 7
 
 	users := []models.User{{Name: "Harry", Email: "beans.yeah@youwhat.not"}}
 	tags := []string{"Harry"}
@@ -240,7 +240,7 @@ func TestGetSimilarTitles(t *testing.T) {
 	var e = "test_end"
 	var long float64 = 1.0
 	var lat float64 = 2.0
-	var id int = -1
+	var id int64 = -1
 	var user models.User
 	user.Name = "beans"
 	users := []models.User{user}
@@ -281,7 +281,7 @@ func TestGetSimilarTags1(t *testing.T) {
 	var e = "test_end"
 	var long float64 = 1.0
 	var lat float64 = 2.0
-	var id int = -1
+	var id int64 = -1
 	var user models.User
 	user.Name = "u11"
 	users := []models.User{user}
@@ -325,7 +325,7 @@ func TestGetSimilarTags2(t *testing.T) {
 	var e = "test_end"
 	var long float64 = 1.0
 	var lat float64 = 2.0
-	var id int = -1
+	var id int64 = -1
 	var user models.User
 	user.Name = "u11"
 	users := []models.User{user}
@@ -379,7 +379,7 @@ func TestGetSimilarTags3(t *testing.T) {
 	var e = "test_end"
 	var long float64 = 1.0
 	var lat float64 = 2.0
-	var id int = -1
+	var id int64 = -1
 	var user models.User
 	user.Name = "u11"
 	users := []models.User{user}
@@ -490,7 +490,7 @@ func generateTestUser(name string, email string, id int64) models.User {
 }
 
 func generateTestNote(title string, comment string, startTime string,
-	endTime string, longitude float64, latitude float64, id int, users []models.User, tags []string) (note models.Note) {
+	endTime string, longitude float64, latitude float64, id int64, users []models.User, tags []string) (note models.Note) {
 
 	note = models.Note{
 		Title:     &title,
@@ -516,7 +516,7 @@ func generateTestRows() (rows *sqlmock.Rows, note models.Note) {
 	endTime := "2017-05-05 00:00"
 	longitude := 1.0
 	latitude := 2.0
-	id := 1
+	var id int64 = 1
 	//email := "test@mapnotes.co.uk"
 	users := []models.User{{Name: "Harry", Email: "beans@classic.com"}}
 	tags := []string{"Harry"}

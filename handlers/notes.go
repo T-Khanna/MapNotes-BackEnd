@@ -147,6 +147,8 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	if models.TimeForAggregation() {
 		var RANGE float64 = 50
+		//Put the newId in the note struct
+		note.Id = &newId
 		notes, err := models.GetNotesWithinRange(RANGE, *note)
 		if err != nil {
 			logAndRespondWithError(
@@ -175,10 +177,25 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			)
 			return
 		}
-		log.Println(notes)
-		//TODO: Need to pass notes variable into second and third functions
-		//      in aggregation chain
+		if len(notes) == 0 {
+			//No notes were similar so no need to continue
+			log.Println("Did not find any similar notes")
+			return
+		}
+		note_ids, note := models.ConstructAggregatedNote(notes)
+		mergeId, mergeErr := models.Notes.Merge(note_ids, note)
+		if mergeErr != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Could not insert merged Note into database.",
+				mergeErr.Error(),
+			)
+			return
+		}
+		newId = mergeId
 	}
+	//TODO Tell the front-end to perform some sort of refresh to get rid of all
+	//the deleted notes
 	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
 
