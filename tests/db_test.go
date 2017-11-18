@@ -7,9 +7,13 @@ import (
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 	//"log"
+	"math"
+	"reflect"
 	"testing"
 	"time"
 )
+
+const TOLERANCE = 0.0000001
 
 func TestInsertNote(t *testing.T) {
 	db, mock := initMockDB(t)
@@ -409,13 +413,6 @@ func TestGetSimilarTags3(t *testing.T) {
 
 type DeleteFunc func(int64) error
 
-/*
-func TestDeleteUser(t *testing.T) {
-  testDelete("users", t, models.Notes.Delete)
-}
-
-*/
-
 func testDelete(tableName string, t *testing.T, deleter DeleteFunc) {
 	db, mock := initMockDB(t)
 	defer db.Close()
@@ -433,6 +430,40 @@ func testDelete(tableName string, t *testing.T, deleter DeleteFunc) {
 
 }
 
+func TestConstructAggregatedNote(t *testing.T) {
+	n1Users := []models.User{generateTestUser("Harry", "harry@harrysworld.com", 1)}
+	n1Tags := []string{"Harry", "beans"}
+	n1 := generateTestNote("First note", "", "2017-11-18 10:10", "2017-11-18 10:50", 1.0, 2.01, 1, n1Users, n1Tags)
+
+	n2Users := []models.User{generateTestUser("Beans", "beans@classic.com", 2)}
+	n2Tags := []string{"heinz", "beans"}
+	n2 := generateTestNote("Second note", "Beans baby", "2017-11-18 10:00", "2017-11-18 11:00", 1.01, 2.02, 2, n2Users, n2Tags)
+
+	n3Users := []models.User{generateTestUser("Bill", "thescienceguy@gmail.com", 3)}
+	n3Tags := []string{}
+	n3 := generateTestNote("Third note", "Science rules!", "2017-11-18 09:50", "2017-11-18 11:05", 1.02, 2.03, 3, n3Users, n3Tags)
+
+	users := append(n1Users, n2Users...)
+	users = append(users, n3Users...)
+	tags := []string{"Harry", "beans", "heinz"}
+
+	notes := []models.Note{n1, n2, n3}
+	ids, result := models.ConstructAggregatedNote(notes)
+
+	assert.True(t, containsId(ids, 1), "Missing note id 1")
+	assert.True(t, containsId(ids, 2), "Missing note id 2")
+	assert.True(t, containsId(ids, 3), "Missing note id 3")
+
+	assert.Equal(t, *n1.Title, *result.Title)
+	assert.Equal(t, *n2.Comment, *result.Comment)
+	assert.Equal(t, "2017-11-18 10:00", *result.StartTime)
+	assert.Equal(t, "2017-11-18 11:00", *result.EndTime)
+	assert.True(t, math.Abs(1.01-*result.Longitude) < TOLERANCE)
+	assert.True(t, math.Abs(2.02-*result.Latitude) < TOLERANCE)
+	assert.True(t, reflect.DeepEqual(users, *result.Users))
+	assert.True(t, reflect.DeepEqual(tags, *result.Tags))
+}
+
 //------------------------------------------------------------------------------------------------------------------------------
 //Test helper methods
 
@@ -443,6 +474,19 @@ func initMockDB(t *testing.T) (db *sql.DB, mock sqlmock.Sqlmock) {
 	}
 	models.SetDB(db)
 	return
+}
+
+func containsId(ids []int64, id int64) bool {
+	for _, el := range ids {
+		if el == id {
+			return true
+		}
+	}
+	return false
+}
+
+func generateTestUser(name string, email string, id int64) models.User {
+	return models.User{Name: name, Email: email, Id: id}
 }
 
 func generateTestNote(title string, comment string, startTime string,

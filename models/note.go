@@ -536,7 +536,6 @@ func withinTimeFrame(t1 string, t2 string, dt int64) bool {
 		log.Println(err)
 	}
 	absDiff := time.Duration(math.Abs(float64(pT1.Sub(pT2)))) * time.Nanosecond
-	log.Println(absDiff)
 	return absDiff < time.Duration(dt)*time.Second
 }
 
@@ -670,45 +669,46 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note *Note) {
 	}
 
 	var n Note
-	*n.Title = aggregateTitle(notes)
-	*n.Comment = aggregateComments(notes, length)
+	n.Title = aggregateTitle(notes)
+	n.Comment = aggregateComments(notes, length)
 	lat, long := aggregateCoordinates(notes, length)
-	*n.Latitude = lat
-	*n.Longitude = long
+	n.Latitude = lat
+	n.Longitude = long
 	startTime, endTime := aggregateTimes(notes, length)
-	*n.StartTime = startTime
-	*n.EndTime = endTime
-	*n.Users = aggregateUsers(notes, length)
-	*n.Tags = aggregateTags(notes, length)
+	n.StartTime = startTime
+	n.EndTime = endTime
+	n.Users = aggregateUsers(notes, length)
+	n.Tags = aggregateTags(notes, length)
 
 	return note_ids, &n
 }
 
 //Our policy for title aggregation
-func aggregateTitle(notes []Note) string {
+func aggregateTitle(notes []Note) *string {
 	//Takes the first note's title. Every note must contain a title so we can
 	//do this
-	return *notes[0].Title
+	return notes[0].Title
 }
 
 //Our policy for comments aggregation
-func aggregateComments(notes []Note, length int) string {
+func aggregateComments(notes []Note, length int) *string {
 	//Takes the first comment we find
 	i := 0
 	for *notes[i].Comment == "" && i < length {
 		i++
 	}
 	if i < length {
-		return *notes[i].Comment
+		return notes[i].Comment
 	} else {
 		//None of the notes had any comments
-		return ""
+		res := ""
+		return &res
 	}
 
 }
 
 //Our policy for latitude and longitude aggregation
-func aggregateCoordinates(notes []Note, length int) (lat float64, long float64) {
+func aggregateCoordinates(notes []Note, length int) (*float64, *float64) {
 	//Take the average latitude and longitudes
 	var accLat float64 = 0
 	var accLong float64 = 0
@@ -716,9 +716,9 @@ func aggregateCoordinates(notes []Note, length int) (lat float64, long float64) 
 		accLat += *notes[j].Latitude
 		accLong += *notes[j].Longitude
 	}
-	lat = accLat / float64(length)
-	long = accLong / float64(length)
-	return
+	lat := accLat / float64(length)
+	long := accLong / float64(length)
+	return &lat, &long
 }
 
 type dateSlice []Date
@@ -740,7 +740,7 @@ type Date struct {
 	time time.Time
 }
 
-func aggregateTimes(notes []Note, length int) (finalStartTime string, finalEndTime string) {
+func aggregateTimes(notes []Note, length int) (finalStartTime *string, finalEndTime *string) {
 	format := "2006-01-02 15:04:05"
 
 	//Sort the time and select the median
@@ -754,7 +754,9 @@ func aggregateTimes(notes []Note, length int) (finalStartTime string, finalEndTi
 		date = Date{str: *notes[i].EndTime, time: endTime}
 		endTimes = append(endTimes, date)
 	}
-	return medianTimes(startTimes), medianTimes(endTimes)
+	medST := medianTimes(startTimes)
+	medET := medianTimes(endTimes)
+	return &medST, &medET
 }
 
 func medianTimes(dates []Date) string {
@@ -774,8 +776,9 @@ func medianTimes(dates []Date) string {
 }
 
 //Our policy for aggregating users
-func aggregateUsers(notes []Note, length int) (users []User) {
+func aggregateUsers(notes []Note, length int) *[]User {
 	//Combine all distinct users
+	var users = make([]User, 0)
 	seenSet := make(map[User]struct{})
 	for i := 0; i < length; i++ {
 		for j := 0; j < len(*notes[i].Users); j++ {
@@ -786,12 +789,13 @@ func aggregateUsers(notes []Note, length int) (users []User) {
 			}
 		}
 	}
-	return
+	return &users
 }
 
 //Our policy for aggregating tags
-func aggregateTags(notes []Note, length int) (tags []string) {
+func aggregateTags(notes []Note, length int) *[]string {
 	//Combine all distinct tags
+	var tags = make([]string, 0)
 	seenSet := make(map[string]struct{})
 	for i := 0; i < length; i++ {
 		for j := 0; j < len(*notes[i].Tags); j++ {
@@ -802,5 +806,5 @@ func aggregateTags(notes []Note, length int) (tags []string) {
 			}
 		}
 	}
-	return
+	return &tags
 }
