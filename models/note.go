@@ -253,7 +253,10 @@ func deleteNote(id int64) error {
 
 func filterNotes(whereClause string) ([]Note, error) {
 	notesWithUsersQuery := fmt.Sprintf(
-		`SELECT comments, title, n.id, startTime AS TIME ZONE 'UTC', endtime AS TIME ZONE 'UTC', longitude, latitude, u.id, u.name, u.email
+		`SELECT comments, title, n.id, 
+      to_char(startTime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'), 
+      to_char(endtime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'), 
+      longitude, latitude, u.id, u.name, u.email
     FROM notes as n
     JOIN notesusers as nu ON n.id = nu.note_id
     JOIN users as u ON nu.user_id = u.id
@@ -507,8 +510,9 @@ func GetAllNotesAroundSameTime(notes []Note) (filter []Note, err error) {
 
 	//Add original new note
 	newNote := notes[0]
+	result = append(result, newNote)
 
-	for i := 0; i < len(notes); i++ {
+	for i := 1; i < len(notes); i++ {
 		if withinTimeFrame(*notes[i].StartTime, *newNote.StartTime, 15*60) &&
 			withinTimeFrame(*notes[i].EndTime, *newNote.EndTime, 15*60) {
 			result = append(result, notes[i])
@@ -529,11 +533,13 @@ func withinTimeFrame(t1 string, t2 string, dt int64) bool {
 	if err != nil {
 		log.Println("Error parsing time t1 ", t1)
 		log.Println(err)
+		return false
 	}
 	pT2, err := time.Parse(format, t2)
 	if err != nil {
 		log.Println("Error parsing time t2 ", t2)
 		log.Println(err)
+		return false
 	}
 	absDiff := time.Duration(math.Abs(float64(pT1.Sub(pT2)))) * time.Nanosecond
 	return absDiff < time.Duration(dt)*time.Second
