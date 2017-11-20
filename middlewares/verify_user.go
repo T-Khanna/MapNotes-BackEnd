@@ -3,9 +3,11 @@ package middlewares
 import (
 	"context"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/auth"
-	//"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
+	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 type UserContextKey struct{}
@@ -23,9 +25,19 @@ func Authenticate(h http.Handler) http.Handler {
 			http.Error(w, "Token unauthenticated", http.StatusUnauthorized)
 			return
 		}
-		//user = models.User{Name: "Beans man", Email: "beans@email.classic"}
+		//user = randomUser()
 		ctx := context.WithValue(r.Context(), UserContextKey{}, user)
 		rWithUser := r.WithContext(ctx)
 		h.ServeHTTP(w, rWithUser)
 	})
+}
+
+func randomUser() models.User {
+	users := make([]models.User, 0)
+	users = append(users, models.User{Name: "Beans man", Email: "beans@email.classic"})
+	users = append(users, models.User{Name: "Harry", Email: "harry@harrysworld.com"})
+	users = append(users, models.User{Name: "Bill Nye", Email: "thescienceguy@science.org"})
+	rand.Seed(time.Now().UTC().UnixNano())
+	index := rand.Intn(len(users))
+	return users[index]
 }
