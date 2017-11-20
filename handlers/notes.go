@@ -144,7 +144,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		)
 		return
 	}
-
+	merge := false
 	if models.TimeForAggregation() {
 		var RANGE float64 = 50
 		//Put the newId in the note struct
@@ -193,11 +193,15 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return
 		}
 		newId = mergeId
+		merge = true
 	}
 	//TODO Tell the front-end to perform some sort of refresh to get rid of all
 	//the deleted notes
-	// Return { id: newId } as JSON.
-	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
+	// Return { id: newId, Merge: merge} as JSON.
+	respondWithJson(w, struct {
+		Id    int64
+		Merge bool
+	}{newId, merge}, http.StatusCreated)
 
 }
 
