@@ -435,8 +435,14 @@ func TimeForAggregation() bool {
 	insertionNoteCounter.Lock()
 	if insertionNoteCounter.counter == insertionNoteCounter.target {
 		insertionNoteCounter.target = randomRange(1, 5)
-		insertionNoteCounter.counter = 0
+		log.Printf("Next merge attempt will occur in %d inserts\n", insertionNoteCounter.target)
+		//Set the counter to -1 as after a merge, we call createNote which will
+		//increment the counter
+		insertionNoteCounter.counter = -1
 		valid = true
+	} else {
+		log.Printf("Current insertion target: %d", insertionNoteCounter.target)
+		log.Printf("Current insertion count: %d", insertionNoteCounter.counter)
 	}
 	insertionNoteCounter.Unlock()
 	return valid
@@ -675,7 +681,9 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	n.StartTime = startTime
 	n.EndTime = endTime
 	n.Users = aggregateUsers(notes, length)
+	log.Println("Cons Users: ", *n.Users)
 	n.Tags = aggregateTags(notes, length)
+	log.Println("Cons Tags: ", *n.Tags)
 
 	return note_ids, n
 }
@@ -776,13 +784,13 @@ func medianTimes(dates []Date) string {
 func aggregateUsers(notes []Note, length int) *[]User {
 	//Combine all distinct users
 	var users = make([]User, 0)
-	seenSet := make(map[User]struct{})
+	seenSet := make(map[string]struct{})
 	for i := 0; i < length; i++ {
 		for j := 0; j < len(*notes[i].Users); j++ {
-			_, found := seenSet[(*notes[i].Users)[j]]
+			_, found := seenSet[(*notes[i].Users)[j].Email]
 			if !found {
 				users = append(users, (*notes[i].Users)[j])
-				seenSet[(*notes[i].Users)[j]] = struct{}{}
+				seenSet[(*notes[i].Users)[j].Email] = struct{}{}
 			}
 		}
 	}
