@@ -22,10 +22,9 @@ func decodeNoteStruct(r *http.Request) (error, *models.Note) {
 	}
 	user := r.Context().Value(middlewares.UserContextKey{}).(models.User)
 
-
-  if note.Users != nil {
-    *note.Users = append(*note.Users, user)
-  } else {
+	if note.Users != nil {
+		*note.Users = append(*note.Users, user)
+	} else {
 		note.Users = &[]models.User{user}
 	}
 
@@ -146,10 +145,10 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-
-	if models.TimeForAggregate() {
-		//check range
+	if models.TimeForAggregation() {
 		var RANGE float64 = 50
+		//Put the newId in the note struct
+		note.Id = &newId
 		notes, err := models.GetNotesWithinRange(RANGE, *note)
 		if err != nil {
 			logAndRespondWithError(
@@ -159,20 +158,44 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			)
 			return
 		}
-    notes = models.GetNotesWithSimilarText(notes)
-    notes, err = models.GetNotesWithSimilarTags(notes)
+		notes, err = models.GetAllNotesAroundSameTime(notes)
 		if err != nil {
 			logAndRespondWithError(
 				w,
-				"Error: Failed to perform a filter of notes by their tags",
+				"Error: Failed to perform a filter of notes by a certain timeframe",
 				err.Error(),
 			)
 			return
 		}
-		log.Println(notes)
-    //TODO: Need to pass notes variable into second and third functions
-    //      in aggregation chain
+		notes = models.GetNotesWithSimilarText(notes)
+		notes, err = models.GetNotesWithSimilarTags(notes)
+		if err != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Failed to perform an aggregation of notes by their tags",
+				err.Error(),
+			)
+			return
+		}
+		if len(notes) == 0 {
+			//No notes were similar so no need to continue
+			log.Println("Did not find any similar notes")
+			return
+		}
+		note_ids, note := models.ConstructAggregatedNote(notes)
+		mergeId, mergeErr := models.Notes.Merge(note_ids, note)
+		if mergeErr != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Could not insert merged Note into database.",
+				mergeErr.Error(),
+			)
+			return
+		}
+		newId = mergeId
 	}
+	//TODO Tell the front-end to perform some sort of refresh to get rid of all
+	//the deleted notes
 	// Return { id: newId } as JSON.
 	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
 
