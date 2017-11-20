@@ -563,16 +563,7 @@ func areSimilarStrings(s1 string, s2 string) bool {
 		return true
 	}
 	s1, s2 = strings.Title(s1), strings.Title(s2)
-	c1, c2 := s1[0], s2[0]
-	if c1 != c2 {
-		return false
-	}
-	for i := 1; i < len(s1); i++ {
-		if s1[i] != s2[i] {
-			return false
-		}
-	}
-	return true
+	return strings.ToLower(s1) == strings.ToLower(s2)
 }
 
 type noteOccurs struct {
