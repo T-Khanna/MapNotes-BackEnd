@@ -465,6 +465,9 @@ func GetNotesWithinRange(radius float64, note Note) (notes []Note, err error) {
 	}
 
 	for i := 0; i < len(notes); i++ {
+    if (*notes[i].Id == *note.Id) {
+      continue
+    }
 		distance := greatCircleDistance(latitude, longitude, *notes[i].Latitude, *notes[i].Longitude)
 		if distance <= radius {
 			result = append(result, notes[i])
