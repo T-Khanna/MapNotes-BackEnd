@@ -670,6 +670,7 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 
 		note_ids = append(note_ids, int64(*notes[i].Id))
 	}
+  log.Println("MERGING NOTES WITH IDS: ", note_ids)
 
 	var n Note
 	n.Title = aggregateTitle(notes)
