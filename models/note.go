@@ -684,6 +684,7 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	log.Println("Cons Users: ", *n.Users)
 	n.Tags = aggregateTags(notes, length)
 	log.Println("Cons Tags: ", *n.Tags)
+  log.Println("Number of notes merged: ", length)
 
 	return note_ids, n
 }
@@ -699,7 +700,7 @@ func aggregateTitle(notes []Note) *string {
 func aggregateComments(notes []Note, length int) *string {
 	//Takes the first comment we find
 	i := 0
-	for *notes[i].Comment == "" && i < length {
+	for i < length && *notes[i].Comment == "" {
 		i++
 	}
 	if i < length {
