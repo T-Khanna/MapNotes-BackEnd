@@ -13,22 +13,22 @@ import (
 	validation "gitlab.doc.ic.ac.uk/g1736215/MapNotes/validation"
 )
 
-func decodeNoteStruct(r *http.Request) (error, *models.Note, int64) {
+func decodeNoteStruct(r *http.Request) (error, *models.Note) {
 	var note models.Note
 	decodeErr := json.NewDecoder(r.Body).Decode(&note)
+
 	if decodeErr != nil {
-		return decodeErr, nil, -1
+		return decodeErr, nil
 	}
 	user := r.Context().Value(middlewares.UserContextKey{}).(models.User)
-	email := user.Email
-	name := user.Name
-	userErr, user_id := models.GetUserId(email, name)
-	if userErr != nil {
-		return userErr, nil, -1
+
+	if note.Users != nil {
+		*note.Users = append(*note.Users, user)
+	} else {
+		note.Users = &[]models.User{user}
 	}
 
-	//var user_id int64 = 1
-	return nil, &note, user_id
+	return nil, &note
 }
 
 /*
@@ -111,7 +111,7 @@ func NotesGetAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 */
 func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Decode body into Note struct
-	decodeErr, note, user_id := decodeNoteStruct(r)
+	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
@@ -144,20 +144,65 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		)
 		return
 	}
-
-	//Insert into NotesUsers table
-	insertErr := models.NotesUsers.Insert(newId, user_id)
-
-	if insertErr != nil {
-		logAndRespondWithError(
-			w,
-			"Error: Could not insert the NoteUser mapping into database.",
-			insertErr.Error(),
-		)
-		return
+	merge := false
+	if models.TimeForAggregation() {
+		var RANGE float64 = 50
+		//Put the newId in the note struct
+		note.Id = &newId
+		notes, err := models.GetNotesWithinRange(RANGE, *note)
+		if err != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Failed to perform a filter of notes with a certain range",
+				err.Error(),
+			)
+			return
+		}
+		notes, err = models.GetAllNotesAroundSameTime(notes)
+		if err != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Failed to perform a filter of notes by a certain timeframe",
+				err.Error(),
+			)
+			return
+		}
+		notes = models.GetNotesWithSimilarText(notes)
+		notes, err = models.GetNotesWithSimilarTags(notes)
+		if err != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Failed to perform an aggregation of notes by their tags",
+				err.Error(),
+			)
+			return
+		}
+		if len(notes) == 0 {
+			//No notes were similar so no need to continue
+			log.Println("Did not find any similar notes")
+			return
+		}
+		note_ids, note := models.ConstructAggregatedNote(notes)
+		mergeId, mergeErr := models.Notes.Merge(note_ids, note)
+		if mergeErr != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Could not insert merged Note into database.",
+				mergeErr.Error(),
+			)
+			return
+		}
+		newId = mergeId
+		merge = true
 	}
-	// Return { id: newId } as JSON.
-	respondWithJson(w, struct{ Id int64 }{newId}, http.StatusCreated)
+	//TODO Tell the front-end to perform some sort of refresh to get rid of all
+	//the deleted notes
+	// Return { id: newId, Merge: merge} as JSON.
+	respondWithJson(w, struct {
+		Id    int64
+		Merge bool
+	}{newId, merge}, http.StatusCreated)
+
 }
 
 /*
@@ -169,7 +214,7 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	The third return value is the name, which should not need updating
 	and thus ignored
 	*/
-	decodeErr, note, _ := decodeNoteStruct(r)
+	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
 		logAndRespondWithError(
