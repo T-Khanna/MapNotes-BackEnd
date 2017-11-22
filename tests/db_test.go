@@ -431,15 +431,15 @@ func testDelete(tableName string, t *testing.T, deleter DeleteFunc) {
 }
 
 func TestConstructAggregatedNote(t *testing.T) {
-	n1Users := []models.User{generateTestUser("Harry", "harry@harrysworld.com", 1)}
+	n1Users := []models.User{generateTestUser("Harry", "harry@harrysworld.com", 1, "blah")}
 	n1Tags := []string{"Harry", "beans"}
 	n1 := generateTestNote("First note", "", "2017-11-18 10:10", "2017-11-18 10:50", 1.0, 2.01, 1, n1Users, n1Tags)
 
-	n2Users := []models.User{generateTestUser("Beans", "beans@classic.com", 2)}
+	n2Users := []models.User{generateTestUser("Beans", "beans@classic.com", 2, "blah")}
 	n2Tags := []string{"heinz", "beans"}
 	n2 := generateTestNote("Second note", "Beans baby", "2017-11-18 10:00", "2017-11-18 11:00", 1.01, 2.02, 2, n2Users, n2Tags)
 
-	n3Users := []models.User{generateTestUser("Bill", "thescienceguy@gmail.com", 3)}
+	n3Users := []models.User{generateTestUser("Bill", "thescienceguy@gmail.com", 3, "blah")}
 	n3Tags := []string{}
 	n3 := generateTestNote("Third note", "Science rules!", "2017-11-18 09:50", "2017-11-18 11:05", 1.02, 2.03, 3, n3Users, n3Tags)
 
@@ -485,8 +485,8 @@ func containsId(ids []int64, id int64) bool {
 	return false
 }
 
-func generateTestUser(name string, email string, id int64) models.User {
-	return models.User{Name: name, Email: email, Id: id}
+func generateTestUser(name string, email string, id int64, picture string) models.User {
+	return models.User{Name: name, Email: email, Id: id, Picture: picture}
 }
 
 func generateTestNote(title string, comment string, startTime string,

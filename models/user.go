@@ -4,13 +4,13 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"sync"
-
 )
 
 type User struct {
-	Id    int64
-	Name  string
-	Email string
+	Id      int64
+	Name    string
+	Email   string
+	Picture string
 }
 
 type SynchronisedMap struct {
