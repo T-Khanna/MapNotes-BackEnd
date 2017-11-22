@@ -47,6 +47,10 @@ func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 }
 
 func createComment(comment Comment) error {
+	user_id := comment.User.Id
+	if user_id == -1 {
+		_, user_id = GetUserId(comment.User)
+	}
 	stmt, err := db.Prepare("INSERT INTO comments(comment, note_id, user_id) VALUES ($1, $2, $3)")
 
 	if err != nil {
@@ -54,10 +58,11 @@ func createComment(comment Comment) error {
 		return err
 	}
 
-	_, err = stmt.Exec(comment.Comment, comment.NoteId, comment.User.Id)
+	_, err = stmt.Exec(comment.Comment, comment.NoteId, user_id)
 
 	if err != nil {
 		log.Println(err)
+		log.Println(comment)
 		return err
 	}
 

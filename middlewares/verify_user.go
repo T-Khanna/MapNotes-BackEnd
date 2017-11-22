@@ -20,12 +20,12 @@ func Authenticate(h http.Handler) http.Handler {
 		token := r.Header.Get("login_token")
 		log.Println(token)
 		isAuthenticated, user := auth.AuthToken(token)
-		//isAuthenticated = true
+		isAuthenticated = true
 		if !isAuthenticated {
 			http.Error(w, "Token unauthenticated", http.StatusUnauthorized)
 			return
 		}
-		//user = randomUser()
+		user = randomUser()
 		ctx := context.WithValue(r.Context(), UserContextKey{}, user)
 		rWithUser := r.WithContext(ctx)
 		h.ServeHTTP(w, rWithUser)
@@ -34,9 +34,9 @@ func Authenticate(h http.Handler) http.Handler {
 
 func randomUser() models.User {
 	users := make([]models.User, 0)
-	users = append(users, models.User{Name: "Beans man", Email: "beans@email.classic"})
-	users = append(users, models.User{Name: "Harry", Email: "harry@harrysworld.com"})
-	users = append(users, models.User{Name: "Bill Nye", Email: "thescienceguy@science.org"})
+	users = append(users, models.User{Name: "Beans man", Email: "beans@email.classic", Picture: "beans.jpg"})
+	users = append(users, models.User{Name: "Harry", Email: "harry@harrysworld.com", Picture: "harry.jpg"})
+	users = append(users, models.User{Name: "Bill Nye", Email: "thescienceguy@science.org", Picture: "bill.jpg"})
 	rand.Seed(time.Now().UTC().UnixNano())
 	index := rand.Intn(len(users))
 	return users[index]
