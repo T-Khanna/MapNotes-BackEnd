@@ -51,6 +51,23 @@ func TestInsertComment(t *testing.T) {
 	}
 }
 
+func TestDeleteComment(t *testing.T) {
+	db, mock := initMockDB(t)
+	defer db.Close()
+
+	var comment string = "Quantum Beans"
+	mock.ExpectPrepare("DELETE FROM comments WHERE comment = \\$1").
+		ExpectExec().
+		WithArgs(comment).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	models.Comments.Delete(comment)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfufilled expectations: %s", err)
+	}
+
+}
+
 //Test Helper Methods
 //--------------------------------------------------------------
 
