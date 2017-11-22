@@ -15,17 +15,18 @@ type Comment struct {
 type CommentOperations struct {
 	GetByNote func(int64) ([]Comment, error)
 	Create    func(Comment) error
-	//Delete func(string) error
+	Delete func(string) error
 }
 
 var Comments = CommentOperations{
 	GetByNote: getCommentsByNoteId,
 	Create:    createComment,
+	Delete:    deleteComment,
 }
 
 func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 	comments := make([]Comment, 0)
-	rows, err := db.Query(`SELECT (comment, comments.id, note_id, users.id, users.name, users.email, users.picture) 
+	rows, err := db.Query(`SELECT (comment, comments.id, note_id, users.id, users.name, users.email, users.picture)
                          FROM comments JOIN users on comments.user_id = users.id WHERE note_id = $1`, note_id)
 	if err != nil {
 		log.Println(err)
@@ -62,4 +63,38 @@ func createComment(comment Comment) error {
 	}
 
 	return err
+}
+
+// Delete comment with a specific comment string
+func deleteComment(comment string) error {
+	stmt, prepErr := db.Prepare("DELETE FROM comments WHERE comment = $1")
+
+	if prepErr != nil {
+		return prepErr
+	}
+
+	_, execErr := stmt.Exec(comment)
+
+	if execErr != nil {
+		return execErr
+	}
+
+	return nil
+}
+
+// Delete all comments for a specific note_id
+func deleteAllCommentinNote(id int64) error {
+	stmt, prepErr := db.Prepare("DELETE FROM comments WHERE note_id = $1")
+
+	if prepErr != nil {
+		return prepErr
+	}
+
+	_, execErr := stmt.Exec(id)
+
+	if execErr != nil {
+		return execErr
+	}
+
+	return nil
 }
