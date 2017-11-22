@@ -178,7 +178,7 @@ func updateNote(note *Note) error {
 
 	// This will be the parameter number of the column-to-update's value in the
 	// query that is constructed.. If a column needs to be updated and it's the
-	// 'numCols'th column to be added to the query, then it will become parameter
+	// 'numCols'th column to be added to the query, then it will become paramater
 	// '$numCols' in the query.
 	numCols := 1
 

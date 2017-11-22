@@ -210,10 +210,6 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
  Creates a new Note with attributes from the request body given in JSON format.
 */
 func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	/* Decode body into Note struct
-	The third return value is the name, which should not need updating
-	and thus ignored
-	*/
 	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
