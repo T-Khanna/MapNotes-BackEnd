@@ -1,7 +1,7 @@
 package tests
 
 import (
-	//"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 	//"log"
@@ -13,7 +13,6 @@ import (
 
 func TestGetCommentsByNoteId(t *testing.T) {
 
-	/*
 	db, mock := initMockDB(t)
 	defer db.Close()
 
@@ -23,7 +22,7 @@ func TestGetCommentsByNoteId(t *testing.T) {
 		WillReturnRows(rows)
 
 	comments, _ := models.Comments.GetByNote(7)
-	log.Println(comments)
+	//log.Println(comments)
 
 	assert.True(t, len(comments) == 2, "Did not return correct number of comments")
 
@@ -35,12 +34,10 @@ func TestGetCommentsByNoteId(t *testing.T) {
 	assert.Equal(t, "wwww.billnyethescienceguy.com/bill.jpg", comments[1].User.Picture)
 	assert.Equal(t, int64(1), comments[0].User.Id)
 
-	*/
 }
 
 func TestInsertComment(t *testing.T) {
 
-	/*
 	db, mock := initMockDB(t)
 	defer db.Close()
 
@@ -49,14 +46,14 @@ func TestInsertComment(t *testing.T) {
 
 	mock.ExpectPrepare("INSERT INTO comments\\((.)+\\) VALUES \\(\\$1, \\$2\\, \\$3\\)").
 		ExpectExec().
-		WithArgs(testComment.Comment, testComment.NoteId, testComment.User.Id)
+		WithArgs(testComment.Comment, testComment.NoteId, testComment.User.Id).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	models.Comments.Create(testComment)
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("There were unfufilled expectations: %s", err)
 	}
 
-	*/
 }
 
 func TestDeleteComment(t *testing.T) {
