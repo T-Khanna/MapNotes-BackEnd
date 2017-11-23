@@ -52,6 +52,7 @@ func GetUserId(u User) (err error, id int64) {
 
 	email := u.Email
 	name := u.Name
+	picture := u.Picture
 
 	keyExists, id := checkUserMap(email)
 
@@ -70,7 +71,7 @@ func GetUserId(u User) (err error, id int64) {
 
 		}
 
-		var newuser User = User{Name: name, Email: email}
+		var newuser User = User{Name: name, Email: email, Picture: picture}
 
 		err, id = createUser(&newuser)
 
@@ -88,14 +89,14 @@ func GetUserId(u User) (err error, id int64) {
 
 func createUser(user *User) (err error, id int64) {
 
-	stmt, err := db.Prepare("INSERT INTO users(email, name) VALUES($1, $2) RETURNING id")
+	stmt, err := db.Prepare("INSERT INTO users(email, name, picture) VALUES($1, $2, $3) RETURNING id")
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	err = stmt.QueryRow(user.Email, user.Name).Scan(&id)
+	err = stmt.QueryRow(user.Email, user.Name, user.Picture).Scan(&id)
 
 	if err != nil {
 		log.Println(err)

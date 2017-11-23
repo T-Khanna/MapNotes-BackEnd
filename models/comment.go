@@ -26,12 +26,17 @@ var Comments = CommentOperations{
 
 func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 	comments := make([]Comment, 0)
-	rows, err := db.Query(`SELECT (comment, comments.id, note_id, users.id, users.name, users.email, users.picture)
+
+	log.Println(note_id)
+	rows, err := db.Query(`SELECT comment, comments.id, note_id, users.id, users.name, users.email, users.picture
                          FROM comments JOIN users on comments.user_id = users.id WHERE note_id = $1`, note_id)
 	if err != nil {
 		log.Println(err)
+
 		return comments, err
 	}
+
+
 	defer rows.Close()
 	for rows.Next() {
 		var comment Comment
@@ -50,6 +55,7 @@ func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 func createComment(comment Comment) error {
 	user_id := comment.User.Id
 	if user_id == -1 {
+
 		_, user_id = GetUserId(comment.User)
 	}
 	stmt, err := db.Prepare("INSERT INTO comments(comment, note_id, user_id) VALUES ($1, $2, $3)")
@@ -63,7 +69,6 @@ func createComment(comment Comment) error {
 
 	if err != nil {
 		log.Println(err)
-		log.Println(comment)
 		return err
 	}
 
