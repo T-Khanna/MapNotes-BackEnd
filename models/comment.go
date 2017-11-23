@@ -15,7 +15,7 @@ type Comment struct {
 type CommentOperations struct {
 	GetByNote func(int64) ([]Comment, error)
 	Create    func(Comment) error
-	Delete func(string) error
+	Delete    func(string) error
 }
 
 var Comments = CommentOperations{
@@ -27,7 +27,7 @@ var Comments = CommentOperations{
 func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 	comments := make([]Comment, 0)
 
-	log.Println(note_id)
+	log.Println("Attempting to retrieve notes with id ", note_id)
 	rows, err := db.Query(`SELECT comment, comments.id, note_id, users.id, users.name, users.email, users.picture
                          FROM comments JOIN users on comments.user_id = users.id WHERE note_id = $1`, note_id)
 	if err != nil {
@@ -35,7 +35,6 @@ func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 
 		return comments, err
 	}
-
 
 	defer rows.Close()
 	for rows.Next() {

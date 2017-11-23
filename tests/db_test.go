@@ -99,14 +99,6 @@ func TestGetTimePeriodNotes(t *testing.T) {
 	mock.ExpectQuery("SELECT (.)+ FROM notes (.)+ LEFT JOIN (.)+ WHERE \\(starttime <= (.)+ AND endtime >= (.)+\\)").
 		WillReturnRows(rows3)
 
-		/*
-		   	mock.ExpectQuery(`SELECT (.)+
-		                       FROM notes (.)+
-		                       JOIN (.)+
-		                       WHERE \(starttime <= (.)+ AND endtime >= (.)+\)`).
-		   		WillReturnRows(rows)
-
-		*/
 	returnedRows, _ := models.Notes.GetActiveAtTime("2017-01-01 00:00")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfufilled expectations: %s", err)
@@ -142,7 +134,7 @@ func TestMergeNotes(t *testing.T) {
 	endTime := "2017-05-05 00:00"
 	longitude := 1.0
 	latitude := 2.0
-	id := 1
+	var id int64 = 1
 	//email := "test@mapnotes.co.uk"
 	users := []models.User{{Name: "Harry", Email: "beans@classic.com"}}
 	tags := []string{"Harry"}
@@ -164,7 +156,6 @@ func TestMergeNotes(t *testing.T) {
 */
 
 func TestInsertUser(t *testing.T) {
-	/*
 	db, mock := initMockDB(t)
 	defer db.Close()
 
@@ -172,7 +163,7 @@ func TestInsertUser(t *testing.T) {
 	var name string = "Harry"
 	var picture string = "bds"
 
-	mock.ExpectPrepare("INSERT INTO users\\((.)+\\) VALUES\\(\\$1, \\$2 \\$3 \\) RETURNING id").
+	mock.ExpectPrepare("INSERT INTO users\\((.)+\\) VALUES\\(\\$1, \\$2, \\$3\\) RETURNING id").
 		ExpectQuery().
 		WithArgs(email, name, picture).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).
@@ -183,7 +174,6 @@ func TestInsertUser(t *testing.T) {
 		t.Fatalf("There were unfufilled expectations: %s", err)
 	}
 
-	*/
 }
 
 func TestGetNotesWithinRange(t *testing.T) {
