@@ -70,7 +70,7 @@ func GetUserId(u User) (err error, id int64) {
 			return nil, user.Id
 
 		}
-
+		//user.Id was -1 which means it is a new user
 		var newuser User = User{Name: name, Email: email, Picture: picture}
 
 		err, id = createUser(&newuser)
