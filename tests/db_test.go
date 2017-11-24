@@ -96,7 +96,7 @@ func TestGetTimePeriodNotes(t *testing.T) {
 	mock.ExpectQuery("SELECT (.)+ FROM notes (.)+ JOIN (.)+ WHERE \\(starttime <= (.)+ AND endtime >= (.)+\\)").
 		WillReturnRows(rows2)
 
-	mock.ExpectQuery("SELECT (.)+ FROM notes (.)+ LEFT JOIN (.)+ WHERE \\(starttime <= (.)+ AND endtime >= (.)+\\)").
+	mock.ExpectQuery("SELECT (.)+ FROM notes (.)+ LEFT JOIN (.)+ WHERE n.id IN \\((.+,)*.+\\)").
 		WillReturnRows(rows3)
 
 	returnedRows, _ := models.Notes.GetActiveAtTime("2017-01-01 00:00")
