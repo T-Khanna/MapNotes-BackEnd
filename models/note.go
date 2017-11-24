@@ -67,10 +67,15 @@ var Notes = NoteOperations{
 	Merge:           mergeNotes,
 }
 
-func mergeNotes(oldIds []int64, newNote Note) (int64, error) {
+func mergeNotes(oldIds []int64, newNote Note) (id int64, err error) {
 
+	id, err = createNote(&newNote)
+
+	Comments.Merge(oldIds, id)
 	deleteNotes(oldIds)
-	return createNote(&newNote)
+
+	return
+
 
 }
 
@@ -253,9 +258,9 @@ func deleteNote(id int64) error {
 
 func filterNotes(whereClause string) ([]Note, error) {
 	notesWithUsersQuery := fmt.Sprintf(
-		`SELECT comments, title, n.id, 
-      to_char(startTime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'), 
-      to_char(endtime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'), 
+		`SELECT comments, title, n.id,
+      to_char(startTime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+      to_char(endtime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
       longitude, latitude, u.id, u.name, u.email
     FROM notes as n
     JOIN notesusers as nu ON n.id = nu.note_id

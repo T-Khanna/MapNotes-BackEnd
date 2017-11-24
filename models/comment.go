@@ -3,6 +3,7 @@ package models
 import (
 	_ "github.com/lib/pq"
 	"log"
+	"fmt"
 )
 
 type Comment struct {
@@ -16,12 +17,27 @@ type CommentOperations struct {
 	GetByNote func(int64) ([]Comment, error)
 	Create    func(Comment) error
 	Delete    func(string) error
+	Merge     func([]int64, int64) error
 }
 
 var Comments = CommentOperations{
 	GetByNote: getCommentsByNoteId,
 	Create:    createComment,
 	Delete:    deleteComment,
+	Merge:     mergeComments,
+}
+
+func mergeComments(oldnoteids []int64, newnoteid int64) (err error) {
+
+	var idString string
+	var noteidString = string(newnoteid)
+
+	q1 :=  fmt.Sprintf("UPDATE comments SET note_id = '%s' WHERE note_id in %s", noteidString ,idString)
+
+	_, err = db.Exec(q1)
+
+	return
+
 }
 
 func getCommentsByNoteId(note_id int64) ([]Comment, error) {
