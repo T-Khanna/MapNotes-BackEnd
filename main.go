@@ -56,6 +56,8 @@ func setupRoutes(router *httprouter.Router) {
 	router.DELETE("/api/notes/:id", handlers.NotesDelete)
 	router.GET("/api/comments/:note_id", handlers.CommentsGetByNote)
 	router.POST("/api/comments", handlers.CommentsCreate)
+	router.GET("/api/images/:note_id", handlers.ImagesGetByNote)
+	router.POST("/api/images", handlers.ImagesCreate)
 
 	// Users
 	router.GET("/api/users", handlers.UserGet)

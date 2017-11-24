@@ -28,7 +28,7 @@ func decodeCommentStruct(r *http.Request) (error, *models.Comment) {
 
 /*
  Route: GET /api/comments/:note_id
- Gets the Note with the specified user email
+ Gets the comments with the specified note id
 */
 func CommentsGetByNote(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	note_id := ps.ByName("note_id")
