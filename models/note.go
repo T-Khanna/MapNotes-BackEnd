@@ -268,29 +268,38 @@ func filterNotes(whereClause string) ([]Note, error) {
     %s`, whereClause,
 	)
 
+	// Get rows of (...note, ...user)
+	notesWithUsersRows, uErr := db.Query(notesWithUsersQuery)
+	if uErr != nil {
+		log.Println("getting user rows failed")
+		return nil, uErr
+	}
+	defer notesWithUsersRows.Close()
+
+	result, notesById, uErr := userRowsToNotes(notesWithUsersRows)
+	if uErr != nil {
+		log.Println("userRowsToNotes failed")
+		return nil, uErr
+	}
+	log.Println(fmt.Sprintf("%s", result))
+
 	notesWithTagsQuery := fmt.Sprintf(
 		`SELECT n.id, t.tag
     FROM notes as n
     LEFT JOIN notestags as nt ON n.id = nt.note_id
     LEFT JOIN tags as t ON nt.tag_id = t.id
-    %s`, whereClause,
+    WHERE n.id IN %s`, result,
 	)
-
-	// Get rows of (...note, ...user)
-	notesWithUsersRows, uErr := db.Query(notesWithUsersQuery)
-	if uErr != nil {
-		return nil, uErr
-	}
-	defer notesWithUsersRows.Close()
 
 	// Get rows of (note.id, tag)
 	notesWithTagsRows, tErr := db.Query(notesWithTagsQuery)
 	if tErr != nil {
+		log.Println("getting note's tags rows failed")
 		return nil, tErr
 	}
 	defer notesWithTagsRows.Close()
 
-	return rowsToNotes(notesWithUsersRows, notesWithTagsRows)
+	return tagsRowsToNotes(notesById, notesWithTagsRows)
 }
 
 type reverseChronologicalOrder []Note
@@ -313,11 +322,7 @@ func (a reverseChronologicalOrder) Less(i, j int) bool {
 	return *a[i].EndTime > *a[j].EndTime
 }
 
-/**
- * Takes rows of (...note, ...user) and (note.id, tag) and constructs a slice
- * of note objects with the tag and user arrays filled in.
- */
-func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]Note, error) {
+func userRowsToNotes(notesWithUsersRows *sql.Rows) (string, map[int64]Note, error) {
 	/*
 	   Loop over notes with users, populating each note's Users field. As this is
 	   done, insert the notes into a hash map by their id. When iterating over
@@ -331,6 +336,7 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 	var emptyNote Note
 	var note Note
 	var user User
+	noteIds := make([]int64, 0)
 
 	for notesWithUsersRows.Next() {
 		err := notesWithUsersRows.Scan(
@@ -346,9 +352,10 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 			&user.Email,
 		)
 		if err != nil {
-			return nil, err
+			return "", notesById, err
 		}
 
+		noteIds = append(noteIds, *note.Id)
 		// If not already hit this note, add it to the map and initialise its users.
 		// Else, get the note from the map and add this user to its users.
 		noteWithUsers := notesById[*note.Id]
@@ -361,7 +368,18 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 			notesById[*note.Id] = noteWithUsers
 		}
 	}
+	result := ConvertIntArrayToString(noteIds)
+	return result, notesById, nil
+}
 
+/**
+ * Takes rows of (...note, ...user) and (note.id, tag) and constructs a slice
+ * of note objects with the tag and user arrays filled in.
+ */
+func tagsRowsToNotes(notesById map[int64]Note, notesWithTagsRows *sql.Rows) ([]Note, error) {
+
+	var note Note
+	var emptyNote Note
 	// Iterate over notes with tags rows, adding tags to the notes from the map,
 	// whose Users field has been created.
 	var tag *string
@@ -407,7 +425,7 @@ func rowsToNotes(notesWithUsersRows *sql.Rows, notesWithTagsRows *sql.Rows) ([]N
 }
 
 func getNotesActiveByUser(userEmail string) ([]Note, error) {
-	s := fmt.Sprintf("WHERE email = '%s'", userEmail)
+	s := fmt.Sprintf("WHERE u.email = '%s'", userEmail)
 	log.Println(s)
 	return filterNotes(s)
 }
@@ -470,9 +488,9 @@ func GetNotesWithinRange(radius float64, note Note) (notes []Note, err error) {
 	}
 
 	for i := 0; i < len(notes); i++ {
-    if (*notes[i].Id == *note.Id) {
-      continue
-    }
+		if *notes[i].Id == *note.Id {
+			continue
+		}
 		distance := greatCircleDistance(latitude, longitude, *notes[i].Latitude, *notes[i].Longitude)
 		if distance <= radius {
 			result = append(result, notes[i])
@@ -678,7 +696,7 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 
 		note_ids = append(note_ids, int64(*notes[i].Id))
 	}
-  log.Println("MERGING NOTES WITH IDS: ", note_ids)
+	log.Println("MERGING NOTES WITH IDS: ", note_ids)
 
 	var n Note
 	n.Title = aggregateTitle(notes)
@@ -693,7 +711,7 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	log.Println("Cons Users: ", *n.Users)
 	n.Tags = aggregateTags(notes, length)
 	log.Println("Cons Tags: ", *n.Tags)
-  log.Println("Number of notes merged: ", length)
+	log.Println("Number of notes merged: ", length)
 
 	return note_ids, n
 }
