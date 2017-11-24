@@ -29,11 +29,8 @@ var Comments = CommentOperations{
 
 func mergeComments(oldnoteids []int64, newnoteid int64) (err error) {
 
-	var idString string
-	var noteidString = string(newnoteid)
-
-	q1 :=  fmt.Sprintf("UPDATE comments SET note_id = '%s' WHERE note_id in %s", noteidString ,idString)
-
+	var idString string = ConvertIntArrayToString(oldnoteids)
+	q1 :=  fmt.Sprintf("UPDATE comments SET note_id = %d WHERE note_id in %s", newnoteid ,idString)
 	_, err = db.Exec(q1)
 
 	return
