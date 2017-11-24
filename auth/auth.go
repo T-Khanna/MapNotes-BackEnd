@@ -55,9 +55,12 @@ func AuthToken(token string) (isAuthenticated bool, user models.User) {
 	// Get user details from claimSet
 	email := claimSet.Email
 	name := claimSet.Name
-
+	picture := claimSet.Picture
+	if picture == "" {
+		log.Println("ClaimSet contained empty picture url")
+	}
 	//Fill User struct
-	user = models.User{Name: name, Email: email}
+	user = models.User{Name: name, Email: email, Picture: picture}
 
 	//Token has been authenticated
 	isAuthenticated = true
