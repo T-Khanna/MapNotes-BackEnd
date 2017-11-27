@@ -72,10 +72,10 @@ func mergeNotes(oldIds []int64, newNote Note) (id int64, err error) {
 	id, err = createNote(&newNote)
 
 	Comments.Merge(oldIds, id)
+	Images.Merge(oldIds, id)
 	deleteNotes(oldIds)
 
 	return
-
 
 }
 

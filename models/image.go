@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	_ "github.com/lib/pq"
 	"log"
 )
@@ -14,13 +15,22 @@ type Image struct {
 type ImageOperations struct {
 	GetByNote func(int64) ([]Image, error)
 	Create    func(Image) error
+	Merge     func([]int64, int64) error
 	//Delete    func(string) error
 }
 
 var Images = ImageOperations{
 	GetByNote: getImagesByNoteId,
 	Create:    createImage,
+	Merge:     mergeImages,
 	//Delete:    deleteImage,
+}
+
+func mergeImages(oldnoteids []int64, newnoteid int64) (err error) {
+	var idString string = ConvertIntArrayToString(oldnoteids)
+	q1 := fmt.Sprintf("UPDATE images SET note_id = %d WHERE note_id in %s", newnoteid, idString)
+	_, err = db.Exec(q1)
+	return
 }
 
 func getImagesByNoteId(note_id int64) ([]Image, error) {
