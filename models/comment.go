@@ -42,7 +42,7 @@ func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 	comments := make([]Comment, 0)
 
 	log.Println("Attempting to retrieve comments with note id ", note_id)
-	rows, err := db.Query(`SELECT comment, comments.id, timestamp, note_id, users.id, users.name, users.email, users.picture
+	rows, err := db.Query(`SELECT comment, comments.id, to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS'), note_id, users.id, users.name, users.email, users.picture
                          FROM comments JOIN users on comments.user_id = users.id WHERE note_id = $1
                          ORDER BY timestamp DESC`, note_id)
 	if err != nil {
@@ -75,14 +75,14 @@ func createComment(comment Comment) error {
 		}
 		user_id = id
 	}
-	stmt, err := db.Prepare("INSERT INTO comments(comment, note_id, user_id, timestamp) VALUES ($1, $2, $3, $4)")
+	stmt, err := db.Prepare("INSERT INTO comments(comment, note_id, user_id, timestamp) VALUES ($1, $2, $3, current_timestamp)")
 
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	_, err = stmt.Exec(comment.Comment, comment.NoteId, user_id, comment.Timestamp)
+	_, err = stmt.Exec(comment.Comment, comment.NoteId, user_id)
 
 	if err != nil {
 		log.Println(err)

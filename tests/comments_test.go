@@ -44,12 +44,12 @@ func TestInsertComment(t *testing.T) {
 	defer db.Close()
 
 	commentUser := generateTestUser("Harry", "Harry@HarrysWorld.com", 1, "blah")
-	testComment := models.Comment{Id: 1, Comment: "Innit", NoteId: 5, User: commentUser, Timestamp: "2017-11-11 16:00"}
+	testComment := models.Comment{Id: 1, Comment: "Innit", NoteId: 5, User: commentUser}
 
-	mock.ExpectPrepare("INSERT INTO comments\\((.)+\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\)").
+	mock.ExpectPrepare("INSERT INTO comments\\((.)+\\) VALUES \\(\\$1, \\$2, \\$3, current_timestamp\\)").
 		ExpectExec().
-		WithArgs(testComment.Comment, testComment.NoteId, testComment.User.Id, testComment.Timestamp).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+		WithArgs(testComment.Comment, testComment.NoteId, testComment.User.Id).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	models.Comments.Create(testComment)
 	if err := mock.ExpectationsWereMet(); err != nil {
