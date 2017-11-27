@@ -33,6 +33,8 @@ func TestGetCommentsByNoteId(t *testing.T) {
 	assert.Equal(t, int64(7), comments[1].NoteId)
 	assert.Equal(t, "wwww.billnyethescienceguy.com/bill.jpg", comments[1].User.Picture)
 	assert.Equal(t, int64(1), comments[0].User.Id)
+	assert.Equal(t, "2017-11-11 12:00:00", comments[0].Timestamp)
+	assert.Equal(t, "2017-11-11 13:00:00", comments[1].Timestamp)
 
 }
 
@@ -42,11 +44,11 @@ func TestInsertComment(t *testing.T) {
 	defer db.Close()
 
 	commentUser := generateTestUser("Harry", "Harry@HarrysWorld.com", 1, "blah")
-	testComment := models.Comment{Id: 1, Comment: "Innit", NoteId: 5, User: commentUser}
+	testComment := models.Comment{Id: 1, Comment: "Innit", NoteId: 5, User: commentUser, Timestamp: "2017-11-11 16:00"}
 
-	mock.ExpectPrepare("INSERT INTO comments\\((.)+\\) VALUES \\(\\$1, \\$2\\, \\$3\\)").
+	mock.ExpectPrepare("INSERT INTO comments\\((.)+\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\)").
 		ExpectExec().
-		WithArgs(testComment.Comment, testComment.NoteId, testComment.User.Id).
+		WithArgs(testComment.Comment, testComment.NoteId, testComment.User.Id, testComment.Timestamp).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	models.Comments.Create(testComment)
@@ -82,13 +84,15 @@ func generateTestRowsComments() (rows *sqlmock.Rows) {
 	commentid1 := 1
 	user1 := generateTestUser("Harry", "Harry@HarrysWorld.com", 1, "wwww.harrysworld.com/harry.jpg")
 	comment1 := "Quantum Beans"
+	timestamp1 := "2017-11-11 12:00:00"
 
 	user2 := generateTestUser("Bill Nye", "thescienceguy@science.com", 2, "wwww.billnyethescienceguy.com/bill.jpg")
 	commentid2 := 2
 	comment2 := "Science rules!"
+	timestamp2 := "2017-11-11 13:00:00"
 
-	rows = sqlmock.NewRows([]string{"comment", "comments.id", "note_id", "users.id", "users.name", "users.email", "users.picture"}).
-		AddRow(comment1, commentid1, noteid, user1.Id, user1.Name, user1.Email, user1.Picture).
-		AddRow(comment2, commentid2, noteid, user2.Id, user2.Name, user2.Email, user2.Picture)
+	rows = sqlmock.NewRows([]string{"comment", "comments.id", "timestamp", "note_id", "users.id", "users.name", "users.email", "users.picture"}).
+		AddRow(comment1, commentid1, timestamp1, noteid, user1.Id, user1.Name, user1.Email, user1.Picture).
+		AddRow(comment2, commentid2, timestamp2, noteid, user2.Id, user2.Name, user2.Email, user2.Picture)
 	return rows
 }
