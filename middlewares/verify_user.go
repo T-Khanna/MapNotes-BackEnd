@@ -20,7 +20,7 @@ func Authenticate(h http.Handler) http.Handler {
 		token := r.Header.Get("login_token")
 		log.Println(token)
 		isAuthenticated, user := auth.AuthToken(token)
-		isAuthenticated = true
+		//isAuthenticated = true
 
 		if !isAuthenticated {
 			http.Error(w, "Token unauthenticated", http.StatusUnauthorized)

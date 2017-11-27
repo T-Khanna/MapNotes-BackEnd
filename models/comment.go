@@ -1,16 +1,17 @@
 package models
 
 import (
+	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-	"fmt"
 )
 
 type Comment struct {
-	Id      int64
-	User    User
-	Comment string
-	NoteId  int64
+	Id        int64
+	User      User
+	Comment   string
+	NoteId    int64
+	Timestamp string
 }
 
 type CommentOperations struct {
@@ -30,7 +31,7 @@ var Comments = CommentOperations{
 func mergeComments(oldnoteids []int64, newnoteid int64) (err error) {
 
 	var idString string = ConvertIntArrayToString(oldnoteids)
-	q1 :=  fmt.Sprintf("UPDATE comments SET note_id = %d WHERE note_id in %s", newnoteid ,idString)
+	q1 := fmt.Sprintf("UPDATE comments SET note_id = %d WHERE note_id in %s", newnoteid, idString)
 	_, err = db.Exec(q1)
 
 	return
@@ -41,8 +42,9 @@ func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 	comments := make([]Comment, 0)
 
 	log.Println("Attempting to retrieve comments with note id ", note_id)
-	rows, err := db.Query(`SELECT comment, comments.id, note_id, users.id, users.name, users.email, users.picture
-                         FROM comments JOIN users on comments.user_id = users.id WHERE note_id = $1`, note_id)
+	rows, err := db.Query(`SELECT comment, comments.id, to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS'), note_id, users.id, users.name, users.email, users.picture
+                         FROM comments JOIN users on comments.user_id = users.id WHERE note_id = $1
+                         ORDER BY timestamp DESC`, note_id)
 	if err != nil {
 		log.Println(err)
 
@@ -53,7 +55,7 @@ func getCommentsByNoteId(note_id int64) ([]Comment, error) {
 	for rows.Next() {
 		var comment Comment
 		var user User
-		err = rows.Scan(&comment.Comment, &comment.Id, &comment.NoteId, &user.Id, &user.Name, &user.Email, &user.Picture)
+		err = rows.Scan(&comment.Comment, &comment.Id, &comment.Timestamp, &comment.NoteId, &user.Id, &user.Name, &user.Email, &user.Picture)
 		if err != nil {
 			log.Println(err)
 			return comments, err
@@ -73,7 +75,7 @@ func createComment(comment Comment) error {
 		}
 		user_id = id
 	}
-	stmt, err := db.Prepare("INSERT INTO comments(comment, note_id, user_id) VALUES ($1, $2, $3)")
+	stmt, err := db.Prepare("INSERT INTO comments(comment, note_id, user_id, timestamp) VALUES ($1, $2, $3, current_timestamp)")
 
 	if err != nil {
 		log.Println(err)
