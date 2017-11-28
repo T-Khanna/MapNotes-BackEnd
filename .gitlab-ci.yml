@@ -10,11 +10,10 @@ stages:
 
 before_script:
  - ls
- - sudo apt-get -y -qq install ruby-dev golang-go
+ - sudo apt-get -y -qq install ruby1.9.1-dev
+ - sudo apt-get -y -qq install golang-go
+ - sudo apt-get -y -qq install libgmp3-dev
  - sudo gem install dpl
- - sudo gem install json
- - sudo gem install pg
- - sudo gem install dotenv
  - sudo apt-get -y -qq install libpq-dev
  - rm -rf $HOME/go/src/$REPO_NAME
  - mkdir -p $HOME/go/src/$REPO_NAME
@@ -23,6 +22,9 @@ before_script:
  - rsync -a $CI_PROJECT_DIR/* $GOPATH/src/$REPO_NAME
  - export PATH=$PATH:$(go env GOPATH)/bin
  - cd $GOPATH/src/$REPO_NAME
+ - sudo gem install json
+ - sudo gem install pg
+ - sudo gem install dotenv
  - go get github.com/tools/godep
  - ls
  - ls handlers
