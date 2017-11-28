@@ -3,9 +3,17 @@
 require 'net/http'
 require 'json'
 require 'pg'
+require 'dotenv'
 
-#uri = URI.parse(ENV["DATABASE_URL"])
-#postgres = PG.connect(uri.hostname, uri.port, nil, nil, uri.path[1..-1], uri.user, uri.password)
+Dotenv.load
+
+def unescape(str)
+  str.gsub(/'/, {"'" => "''"})
+end
+
+
+uri = URI.parse(ENV['DATABASE_URL'])
+postgres = PG.connect(uri.hostname, uri.port, nil, nil, uri.path[1..-1], uri.user, uri.password)
 
 def gen_url(path) 
 	full_url = URI('https://www.eventbriteapi.com/v3/' + path + 'token=GJ2IG7JJRDXTOF77BOTH')
@@ -41,8 +49,8 @@ loop do
 	for i in 0..number do
 		event =  jsonObj["events"][i]
 		if event != nil 
-			name = event["name"]["text"]
-			description = event["description"]["text"]
+			name = unescape(event["name"]["text"])
+			description = unescape(event["description"]["text"])
 			if description != nil
 				description += "\n" + event["url"]
 			else 
@@ -68,11 +76,11 @@ loop do
 			#puts "start time: " + startTime
 			#puts "end time: " + endTime
 	
-			#result = postgres.exec("SELECT * from notes WHERE title=" + name + " AND starttime=" + startTime)
-			#if result.num_tuples == 0 
-			#	values = name + ", " + description + ", " + startTime + ", " + endTime + ", " + longitude + ", " + latitude
-			#	postgres.exec("INSERT INTO notes(title, comment, starttime, endtime, longitide, latitude) VALUES(" + values+ ")")
-			#end
+      result = postgres.exec("SELECT * from notes WHERE title='" + name + "' AND starttime='" + startTime + "'")
+      if result.num_tuples == 0 
+        values = "'" + name + "', " + "'" +  description + "', " + "'" + startTime + "', " + "'" + endTime + "', " + longitude + ", " + latitude
+        postgres.exec("INSERT INTO notes(title, comments, starttime, endtime, longitude, latitude) VALUES(" + values+ ")")
+      end
 		end
 	end
 	currentPage = currentPage + 1
