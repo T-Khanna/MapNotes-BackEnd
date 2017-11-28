@@ -717,6 +717,8 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	n.Users = aggregateUsers(notes, length)
 	log.Println("Cons Users: ", *n.Users)
 	n.Tags = aggregateTags(notes, length)
+  var images = make([]string, 0)
+  n.Images = &images
 	log.Println("Cons Tags: ", *n.Tags)
 	log.Println("Number of notes merged: ", length)
 
