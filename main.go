@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+	"os/exec"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
@@ -25,12 +27,29 @@ func main() {
 
 	router := initRouter()
 
+	go callScript()
+
+
 	fmt.Println("Starting server on port", port)
 	err := http.ListenAndServe(":"+string(port), router)
 
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
+}
+
+func callScript() {
+
+	log.Println("heidfjifd")
+
+	script := exec.Command("ruby get_events.rb")
+	script.Start()
+	script.Wait()
+
+	log.Println("t34itj34tigsdgbkjsd")
+	time.Sleep(48 * time.Hour)
+
 }
 
 func initRouter() http.Handler {
