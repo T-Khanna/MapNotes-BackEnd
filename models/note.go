@@ -39,6 +39,7 @@ type Note struct {
 	Id        *int64    `json:"id,omitempty"`
 	Users     *[]User   `json:"users,omitempty"`
 	Tags      *[]string `json:"tags,omitempty"`
+	Images    *[]string `json:"images,omitempty"`
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
@@ -140,6 +141,12 @@ func createNote(note *Note) (int64, error) {
 		if err != nil {
 			return -1, err
 		}
+	}
+
+	images := note.Images
+	for _, i := range *images {
+		image := Image{URL: i, NoteId: id}
+		Images.Create(image)
 	}
 
 	//Increment counter
