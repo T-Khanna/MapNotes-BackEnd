@@ -10,6 +10,7 @@ stages:
 
 before_script:
  - ls
+ - sudo apt-get -y -qq install build-essential
  - sudo apt-get -y -qq install ruby1.9.1-dev
  - sudo apt-get -y -qq install golang-go
  - sudo apt-get -y -qq install libgmp3-dev
