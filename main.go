@@ -43,7 +43,7 @@ func callScript() {
 
 	log.Println("heidfjifd")
 
-	script := exec.Command("ruby get_events.rb")
+	script := exec.Command("ruby", "get_events.rb")
 	script.Start()
 	script.Wait()
 
