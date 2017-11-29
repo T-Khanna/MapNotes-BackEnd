@@ -44,8 +44,11 @@ func callScript() {
 	log.Println("heidfjifd")
 
 	script := exec.Command("ruby", "get_events.rb")
-	script.Start()
-	script.Wait()
+	err := script.Start()
+	err2 := script.Wait()
+
+	log.Println(err)
+	log.Println(err2)
 
 	log.Println("t34itj34tigsdgbkjsd")
 	time.Sleep(48 * time.Hour)
