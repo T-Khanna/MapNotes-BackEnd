@@ -1,6 +1,8 @@
 package Validation
 
 import (
+    "time"
+
 	"gitlab.doc.ic.ac.uk/g1736215/MapNotes/models"
 )
 
@@ -43,8 +45,9 @@ func validateLatitude(latitude float64) bool {
 	return boundCheck(-90, 90, latitude)
 }
 
-func validateTime(startTime string) bool {
-	return true
+func validateTime(timestamp string) bool {
+	_, err := time.Parse(models.NoteTimeFormat, timestamp)
+    return err == nil
 }
 
 func validateTitle(title string) bool {

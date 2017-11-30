@@ -21,6 +21,9 @@ type SynchronisedNoteCounter struct {
 	target  int
 }
 
+// Time format used by notes
+const NoteTimeFormat = "2006-01-02 15:04:05"
+
 /*
   A counter that is used to keep track of how many notes we have inserted
   during the run time of the server.
@@ -560,14 +563,13 @@ func GetAllNotesAroundSameTime(notes []Note) (filter []Note, err error) {
   dt - time frame in seconds
 */
 func withinTimeFrame(t1 string, t2 string, dt int64) bool {
-	format := "2006-01-02 15:04:05"
-	pT1, err := time.Parse(format, t1)
+	pT1, err := time.Parse(NoteTimeFormat, t1)
 	if err != nil {
 		log.Println("Error parsing time t1 ", t1)
 		log.Println(err)
 		return false
 	}
-	pT2, err := time.Parse(format, t2)
+	pT2, err := time.Parse(NoteTimeFormat, t2)
 	if err != nil {
 		log.Println("Error parsing time t2 ", t2)
 		log.Println(err)
@@ -774,16 +776,14 @@ type Date struct {
 }
 
 func aggregateTimes(notes []Note, length int) (finalStartTime *string, finalEndTime *string) {
-	format := "2006-01-02 15:04:05"
-
-	//Sort the time and select the median
+    //Sort the time and select the median
 	startTimes := make([]Date, 0)
 	endTimes := make([]Date, 0)
 	for i := 0; i < length; i++ {
-		startTime, _ := time.Parse(format, *notes[i].StartTime)
+		startTime, _ := time.Parse(NoteTimeFormat, *notes[i].StartTime)
 		date := Date{str: *notes[i].StartTime, time: startTime}
 		startTimes = append(startTimes, date)
-		endTime, _ := time.Parse(format, *notes[i].EndTime)
+		endTime, _ := time.Parse(NoteTimeFormat, *notes[i].EndTime)
 		date = Date{str: *notes[i].EndTime, time: endTime}
 		endTimes = append(endTimes, date)
 	}
