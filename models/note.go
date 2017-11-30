@@ -3,7 +3,6 @@ package models
 import (
 	"bytes"
 	"database/sql"
-	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
