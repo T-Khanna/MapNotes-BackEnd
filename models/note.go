@@ -227,12 +227,6 @@ func updateNote(note *Note) error {
 		values = append(values, *note.Latitude)
 	}
 
-	if note.Tags != nil {
-		buffer.WriteString(fmt.Sprintf("Tags = $%d, ", numCols))
-		numCols++
-		values = append(values, *note.Tags)
-	}
-
 	// FIXME: For some reason, bytes.TrimSuffix does not exist, so the trailing
 	// comma cannot be removed. Instead, add a superflous 'id = id'.
 	buffer.WriteString(fmt.Sprintf("id = %d", *note.Id))
