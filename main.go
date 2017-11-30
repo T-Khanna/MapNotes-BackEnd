@@ -41,15 +41,13 @@ func main() {
 
 func callScript() {
 
-	log.Println("heidfjifd")
+	log.Println("Starting EventBrite event collection script...")
 
-	script := exec.Command("ruby", "get_events.rb")
-	err := script.Run()
+	script := exec.Command("heroku run ruby", "get_events.rb")
+	script.Start()
+	script.Wait()
 
-	log.Println(err)
-	//log.Println(err2)
-
-	log.Println("t34itj34tigsdgbkjsd")
+	log.Println("Ending event collection script...")
 	time.Sleep(48 * time.Hour)
 
 }
