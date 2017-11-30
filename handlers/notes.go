@@ -122,7 +122,7 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if !(validation.ValidateNoteRequest(note)) {
+	if !(validation.ValidateNote(note)) {
 
 		logAndRespondWithError(
 			w,
@@ -220,6 +220,12 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		)
 		return
 	}
+
+    if !validation.ValidatePartialNote(note) {
+        msg := "Error: Invalid Note."
+        logAndRespondWithError(w, msg, fmt.Sprintf("%s\n    Note = %+v", msg, *note))
+        return
+    }
 
 	// Create new Note
 	updateErr := models.Notes.Update(note)
