@@ -9,7 +9,7 @@ const firstId int64 = 1
 func ValidateNote(note *models.Note) bool {
 	return validateId(*note.Id)            &&
         validateTitle(*note.Title)         &&
-		validateComment(*note.Comment)    &&
+		validateComment(*note.Comment)     &&
 		validateLongitude(*note.Longitude) &&
 		validateLatitude(*note.Latitude)   &&
 		validateTime(*note.StartTime)      &&
