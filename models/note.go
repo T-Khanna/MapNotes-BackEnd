@@ -3,7 +3,6 @@ package models
 import (
 	"bytes"
 	"database/sql"
-	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
@@ -157,6 +156,10 @@ func createNote(note *Note) (int64, error) {
 	return id, nil
 }
 
+/*
+  Partial updates on notes by id.
+  PRE: Note has been validated.
+ */
 func updateNote(note *Note) error {
 	/*
 	   To implement partial updates:
@@ -172,13 +175,9 @@ func updateNote(note *Note) error {
 	   Uses a byte buffer to avoid re-concatenating strings over and over.
 	*/
 
-	if note.Id == nil {
-		return errors.New("Error: Attempting to update Note but ID not provided")
-	}
-
 	// This will be the parameter number of the column-to-update's value in the
 	// query that is constructed.. If a column needs to be updated and it's the
-	// 'numCols'th column to be added to the query, then it will become parameter
+	// 'numCols'th column to be added to the query, then it will become paramater
 	// '$numCols' in the query.
 	numCols := 1
 
@@ -225,12 +224,6 @@ func updateNote(note *Note) error {
 		buffer.WriteString(fmt.Sprintf("Latitude = $%d, ", numCols))
 		numCols++
 		values = append(values, *note.Latitude)
-	}
-
-	if note.Tags != nil {
-		buffer.WriteString(fmt.Sprintf("Tags = $%d, ", numCols))
-		numCols++
-		values = append(values, *note.Tags)
 	}
 
 	// FIXME: For some reason, bytes.TrimSuffix does not exist, so the trailing
