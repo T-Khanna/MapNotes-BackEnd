@@ -63,7 +63,7 @@ func printNote(n models.Note) {
   log.Println(*n.Longitude)
   log.Println(*n.Latitude)
   //log.Println(*n.Id)
-  //log.Println(*n.Users)
+  log.Println(*n.Users)
   //log.Println(*n.Tags)
 }   
 
@@ -135,6 +135,13 @@ func GetEventBriteEvents() {
       long, _ := strconv.ParseFloat(longitude, 64)
       newNote.Latitude = &lat
       newNote.Longitude = &long
+      var eventBriteUser models.User
+      eventBriteUser.Id = -1
+      eventBriteUser.Name = "EventBrite"
+      eventBriteUser.Email = "eventbrite@example.com"
+      eventBriteUser.Picture = "https://tctechcrunch2011.files.wordpress.com/2014/06/eventbrite_1.jpg?w=700"
+      newUsers := []models.User{eventBriteUser}
+      newNote.Users = &newUsers
 
       printNote(newNote)
       models.Notes.Create(&newNote)
