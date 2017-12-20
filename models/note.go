@@ -123,33 +123,37 @@ func createNote(note *Note) (int64, error) {
 	// Get tags from note and insert each tag in database
 	tags := note.Tags
 
-	for _, t := range *tags {
+  if tags != nil {
+	  for _, t := range *tags {
+		  err := linkTag(t, id)
 
-		err := linkTag(t, id)
-
-		if err != nil {
-			return id, err
-		}
-	}
+	    if err != nil {
+	      return id, err
+	    }
+	  }
+  }
 
 	users := note.Users
 
-	for _, u := range *users {
+  if users != nil {
+	  for _, u := range *users {
+	    _, uid := GetUserId(u)
 
-		_, uid := GetUserId(u)
+		  err := NotesUsers.Insert(id, uid)
 
-		err := NotesUsers.Insert(id, uid)
-
-		if err != nil {
-			return -1, err
-		}
-	}
+		  if err != nil {
+			  return -1, err
+		  }
+	  }
+  }
 
 	images := note.Images
-	for _, i := range *images {
-		image := Image{URL: i, NoteId: id}
-		Images.Create(image)
-	}
+  if images != nil {
+	  for _, i := range *images {
+      image := Image{URL: i, NoteId: id}
+      Images.Create(image)
+	  }
+  }
 
 	//Increment counter
 	insertionNoteCounter.Lock()
@@ -712,6 +716,8 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	n.Users = aggregateUsers(notes, length)
 	log.Println("Cons Users: ", *n.Users)
 	n.Tags = aggregateTags(notes, length)
+  var images = make([]string, 0)
+  n.Images = &images
 	log.Println("Cons Tags: ", *n.Tags)
 	log.Println("Number of notes merged: ", length)
 

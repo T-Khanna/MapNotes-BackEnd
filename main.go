@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"os/exec"
+	//"os/exec"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
@@ -41,13 +41,14 @@ func main() {
 
 func callScript() {
 
-	log.Println("heidfjifd")
+	log.Println("Starting EventBrite event collection script...")
 
-	script := exec.Command("heroku run ruby", "get_events.rb")
-	script.Start()
-	script.Wait()
+	//script := exec.Command("heroku run ruby", "get_events.rb")
+	//script.Run()
 
-	log.Println("t34itj34tigsdgbkjsd")
+  GetEventBriteEvents()
+
+	log.Println("Ending event collection script...")
 	time.Sleep(48 * time.Hour)
 
 }

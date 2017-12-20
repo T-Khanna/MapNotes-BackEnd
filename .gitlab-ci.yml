@@ -16,7 +16,7 @@ before_script:
  - sudo apt-get -y -qq install libpq-dev
  - ruby -v
  - sudo gem install dpl
- - rm -rf $HOME/go/src/$REPO_NAME
+ - sudo rm -rf $HOME/go/src/$REPO_NAME
  - mkdir -p $HOME/go/src/$REPO_NAME
  - export GOPATH=$HOME/go
  - ls
@@ -56,4 +56,4 @@ deploy-mapnotes:
     - master
   script:
     - echo deploy
-    - dpl --provider=heroku --app=mapnotes-backend --api-key=$HEROKU_STAGING_API_KEY
+    - sudo dpl --provider=heroku --app=mapnotes-backend --api-key=$HEROKU_STAGING_API_KEY
