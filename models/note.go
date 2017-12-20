@@ -63,7 +63,7 @@ type NoteOperations struct {
 var Notes = NoteOperations{
 	GetAll:          getAllNotes,
 	GetActiveAtTime: getNotesActiveAtTime,
-	GetByUser:       getNotesActiveByUser,
+	GetByUser:       getNotesByUser,
 	Create:          createNote,
 	Update:          updateNote,
 	Delete:          deleteNote,
@@ -123,37 +123,37 @@ func createNote(note *Note) (int64, error) {
 	// Get tags from note and insert each tag in database
 	tags := note.Tags
 
-  if tags != nil {
-	  for _, t := range *tags {
-		  err := linkTag(t, id)
+	if tags != nil {
+		for _, t := range *tags {
+			err := linkTag(t, id)
 
-	    if err != nil {
-	      return id, err
-	    }
-	  }
-  }
+			if err != nil {
+				return id, err
+			}
+		}
+	}
 
 	users := note.Users
 
-  if users != nil {
-	  for _, u := range *users {
-	    _, uid := GetUserId(u)
+	if users != nil {
+		for _, u := range *users {
+			_, uid := GetUserId(u)
 
-		  err := NotesUsers.Insert(id, uid)
+			err := NotesUsers.Insert(id, uid)
 
-		  if err != nil {
-			  return -1, err
-		  }
-	  }
-  }
+			if err != nil {
+				return -1, err
+			}
+		}
+	}
 
 	images := note.Images
-  if images != nil {
-	  for _, i := range *images {
-      image := Image{URL: i, NoteId: id}
-      Images.Create(image)
-	  }
-  }
+	if images != nil {
+		for _, i := range *images {
+			image := Image{URL: i, NoteId: id}
+			Images.Create(image)
+		}
+	}
 
 	//Increment counter
 	insertionNoteCounter.Lock()
@@ -166,7 +166,7 @@ func createNote(note *Note) (int64, error) {
 /*
   Partial updates on notes by id.
   PRE: Note has been validated.
- */
+*/
 func updateNote(note *Note) error {
 	/*
 	   To implement partial updates:
@@ -261,6 +261,30 @@ func deleteNote(id int64) error {
 	}
 
 	return nil
+}
+
+func getNotesByUser(userEmail string) ([]Note, error) {
+	s := fmt.Sprintf(`WHERE u.email = '%s'
+                    UNION
+                    SELECT comments, title, n.id,
+                      to_char(startTime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+                      to_char(endtime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+                      longitude, latitude, u.id, u.name, u.email
+                    FROM attended a JOIN users u on a.user_id = u.id
+                    JOIN notes as n on a.note_id = n.id
+                    WHERE u.email = '%s'`, userEmail, userEmail)
+	log.Println(s)
+	return filterNotes(s)
+}
+
+func getNotesActiveAtTime(time string) ([]Note, error) {
+	s := fmt.Sprintf("WHERE (starttime <= '%[1]s' AND endtime >= '%[1]s')", time)
+	log.Println(s)
+	return filterNotes(s)
+}
+
+func getAllNotes() ([]Note, error) {
+	return filterNotes("")
 }
 
 func filterNotes(whereClause string) ([]Note, error) {
@@ -429,22 +453,6 @@ func tagsRowsToNotes(notesById map[int64]Note, notesWithTagsRows *sql.Rows) ([]N
 	sort.Sort(reverseChronologicalOrder(notes))
 
 	return notes, nil
-}
-
-func getNotesActiveByUser(userEmail string) ([]Note, error) {
-	s := fmt.Sprintf("WHERE u.email = '%s'", userEmail)
-	log.Println(s)
-	return filterNotes(s)
-}
-
-func getNotesActiveAtTime(time string) ([]Note, error) {
-	s := fmt.Sprintf("WHERE (starttime <= '%[1]s' AND endtime >= '%[1]s')", time)
-	log.Println(s)
-	return filterNotes(s)
-}
-
-func getAllNotes() ([]Note, error) {
-	return filterNotes("")
 }
 
 func printNote(n Note) {
@@ -716,8 +724,8 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	n.Users = aggregateUsers(notes, length)
 	log.Println("Cons Users: ", *n.Users)
 	n.Tags = aggregateTags(notes, length)
-  var images = make([]string, 0)
-  n.Images = &images
+	var images = make([]string, 0)
+	n.Images = &images
 	log.Println("Cons Tags: ", *n.Tags)
 	log.Println("Number of notes merged: ", length)
 
@@ -782,7 +790,7 @@ type Date struct {
 }
 
 func aggregateTimes(notes []Note, length int) (finalStartTime *string, finalEndTime *string) {
-    //Sort the time and select the median
+	//Sort the time and select the median
 	startTimes := make([]Date, 0)
 	endTimes := make([]Date, 0)
 	for i := 0; i < length; i++ {
