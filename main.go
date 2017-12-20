@@ -27,7 +27,7 @@ func main() {
 
 	router := initRouter()
 
-	//go callScript()
+	go callScript()
 
 	fmt.Println("Starting server on port", port)
 	err := http.ListenAndServe(":"+string(port), router)
