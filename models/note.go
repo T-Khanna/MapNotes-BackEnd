@@ -3,7 +3,6 @@ package models
 import (
 	"bytes"
 	"database/sql"
-	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
@@ -21,6 +20,9 @@ type SynchronisedNoteCounter struct {
 	counter int
 	target  int
 }
+
+// Time format used by notes
+const NoteTimeFormat = "2006-01-02 15:04:05"
 
 /*
   A counter that is used to keep track of how many notes we have inserted
@@ -61,7 +63,7 @@ type NoteOperations struct {
 var Notes = NoteOperations{
 	GetAll:          getAllNotes,
 	GetActiveAtTime: getNotesActiveAtTime,
-	GetByUser:       getNotesActiveByUser,
+	GetByUser:       getNotesByUser,
 	Create:          createNote,
 	Update:          updateNote,
 	Delete:          deleteNote,
@@ -121,37 +123,37 @@ func createNote(note *Note) (int64, error) {
 	// Get tags from note and insert each tag in database
 	tags := note.Tags
 
-  if tags != nil {
-	  for _, t := range *tags {
-		  err := linkTag(t, id)
+	if tags != nil {
+		for _, t := range *tags {
+			err := linkTag(t, id)
 
-	    if err != nil {
-	      return id, err
-	    }
-	  }
-  }
+			if err != nil {
+				return id, err
+			}
+		}
+	}
 
 	users := note.Users
 
-  if users != nil {
-	  for _, u := range *users {
-	    _, uid := GetUserId(u)
+	if users != nil {
+		for _, u := range *users {
+			_, uid := GetUserId(u)
 
-		  err := NotesUsers.Insert(id, uid)
+			err := NotesUsers.Insert(id, uid)
 
-		  if err != nil {
-			  return -1, err
-		  }
-	  }
-  }
+			if err != nil {
+				return -1, err
+			}
+		}
+	}
 
 	images := note.Images
-  if images != nil {
-	  for _, i := range *images {
-      image := Image{URL: i, NoteId: id}
-      Images.Create(image)
-	  }
-  }
+	if images != nil {
+		for _, i := range *images {
+			image := Image{URL: i, NoteId: id}
+			Images.Create(image)
+		}
+	}
 
 	//Increment counter
 	insertionNoteCounter.Lock()
@@ -161,6 +163,10 @@ func createNote(note *Note) (int64, error) {
 	return id, nil
 }
 
+/*
+  Partial updates on notes by id.
+  PRE: Note has been validated.
+*/
 func updateNote(note *Note) error {
 	/*
 	   To implement partial updates:
@@ -176,13 +182,9 @@ func updateNote(note *Note) error {
 	   Uses a byte buffer to avoid re-concatenating strings over and over.
 	*/
 
-	if note.Id == nil {
-		return errors.New("Error: Attempting to update Note but ID not provided")
-	}
-
 	// This will be the parameter number of the column-to-update's value in the
 	// query that is constructed.. If a column needs to be updated and it's the
-	// 'numCols'th column to be added to the query, then it will become parameter
+	// 'numCols'th column to be added to the query, then it will become paramater
 	// '$numCols' in the query.
 	numCols := 1
 
@@ -231,12 +233,6 @@ func updateNote(note *Note) error {
 		values = append(values, *note.Latitude)
 	}
 
-	if note.Tags != nil {
-		buffer.WriteString(fmt.Sprintf("Tags = $%d, ", numCols))
-		numCols++
-		values = append(values, *note.Tags)
-	}
-
 	// FIXME: For some reason, bytes.TrimSuffix does not exist, so the trailing
 	// comma cannot be removed. Instead, add a superflous 'id = id'.
 	buffer.WriteString(fmt.Sprintf("id = %d", *note.Id))
@@ -265,6 +261,30 @@ func deleteNote(id int64) error {
 	}
 
 	return nil
+}
+
+func getNotesByUser(userEmail string) ([]Note, error) {
+	s := fmt.Sprintf(`WHERE u.email = '%s'
+                    UNION
+                    SELECT comments, title, n.id,
+                      to_char(startTime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+                      to_char(endtime AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+                      longitude, latitude, u.id, u.name, u.email
+                    FROM attended a JOIN users u on a.user_id = u.id
+                    JOIN notes as n on a.note_id = n.id
+                    WHERE u.email = '%s'`, userEmail, userEmail)
+	log.Println(s)
+	return filterNotes(s)
+}
+
+func getNotesActiveAtTime(time string) ([]Note, error) {
+	s := fmt.Sprintf("WHERE (starttime <= '%[1]s' AND endtime >= '%[1]s')", time)
+	log.Println(s)
+	return filterNotes(s)
+}
+
+func getAllNotes() ([]Note, error) {
+	return filterNotes("")
 }
 
 func filterNotes(whereClause string) ([]Note, error) {
@@ -435,22 +455,6 @@ func tagsRowsToNotes(notesById map[int64]Note, notesWithTagsRows *sql.Rows) ([]N
 	return notes, nil
 }
 
-func getNotesActiveByUser(userEmail string) ([]Note, error) {
-	s := fmt.Sprintf("WHERE u.email = '%s'", userEmail)
-	log.Println(s)
-	return filterNotes(s)
-}
-
-func getNotesActiveAtTime(time string) ([]Note, error) {
-	s := fmt.Sprintf("WHERE (starttime <= '%[1]s' AND endtime >= '%[1]s')", time)
-	log.Println(s)
-	return filterNotes(s)
-}
-
-func getAllNotes() ([]Note, error) {
-	return filterNotes("")
-}
-
 func printNote(n Note) {
 	log.Println("Printing note...")
 	log.Println(*n.Title)
@@ -571,14 +575,13 @@ func GetAllNotesAroundSameTime(notes []Note) (filter []Note, err error) {
   dt - time frame in seconds
 */
 func withinTimeFrame(t1 string, t2 string, dt int64) bool {
-	format := "2006-01-02 15:04:05"
-	pT1, err := time.Parse(format, t1)
+	pT1, err := time.Parse(NoteTimeFormat, t1)
 	if err != nil {
 		log.Println("Error parsing time t1 ", t1)
 		log.Println(err)
 		return false
 	}
-	pT2, err := time.Parse(format, t2)
+	pT2, err := time.Parse(NoteTimeFormat, t2)
 	if err != nil {
 		log.Println("Error parsing time t2 ", t2)
 		log.Println(err)
@@ -721,8 +724,8 @@ func ConstructAggregatedNote(notes []Note) (note_ids []int64, note Note) {
 	n.Users = aggregateUsers(notes, length)
 	log.Println("Cons Users: ", *n.Users)
 	n.Tags = aggregateTags(notes, length)
-  var images = make([]string, 0)
-  n.Images = &images
+	var images = make([]string, 0)
+	n.Images = &images
 	log.Println("Cons Tags: ", *n.Tags)
 	log.Println("Number of notes merged: ", length)
 
@@ -787,16 +790,14 @@ type Date struct {
 }
 
 func aggregateTimes(notes []Note, length int) (finalStartTime *string, finalEndTime *string) {
-	format := "2006-01-02 15:04:05"
-
 	//Sort the time and select the median
 	startTimes := make([]Date, 0)
 	endTimes := make([]Date, 0)
 	for i := 0; i < length; i++ {
-		startTime, _ := time.Parse(format, *notes[i].StartTime)
+		startTime, _ := time.Parse(NoteTimeFormat, *notes[i].StartTime)
 		date := Date{str: *notes[i].StartTime, time: startTime}
 		startTimes = append(startTimes, date)
-		endTime, _ := time.Parse(format, *notes[i].EndTime)
+		endTime, _ := time.Parse(NoteTimeFormat, *notes[i].EndTime)
 		date = Date{str: *notes[i].EndTime, time: endTime}
 		endTimes = append(endTimes, date)
 	}
