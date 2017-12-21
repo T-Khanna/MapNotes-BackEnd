@@ -314,6 +314,11 @@ func filterNotes(whereClause string) ([]Note, error) {
 	}
 	log.Println(fmt.Sprintf("%s", result))
 
+	if len(result) == 2 {
+		//this is just the empty tuple ()
+		return []Note{}, nil
+	}
+
 	notesWithTagsQuery := fmt.Sprintf(
 		`SELECT n.id, t.tag
     FROM notes as n
