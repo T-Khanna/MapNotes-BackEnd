@@ -39,7 +39,6 @@ func main() {
 }
 
 func callScript() {
-
 	log.Println("Starting EventBrite event collection script...")
 
 	//script := exec.Command("heroku run ruby", "get_events.rb")
@@ -48,8 +47,10 @@ func callScript() {
 	GetEventBriteEvents()
 
 	log.Println("Ending event collection script...")
+
 	time.Sleep(48 * time.Hour)
 
+  callScript()
 }
 
 func initRouter() http.Handler {

@@ -79,13 +79,14 @@ func ipToS(i *int64) string {
 // Possibly will be a similar struct for any future structs we perform CRUD on.
 // Refactor when the time comes.
 type NoteOperations struct {
-	GetAll          func() ([]Note, error)
-	GetActiveAtTime func(string) ([]Note, error)
-	GetByUser       func(string) ([]Note, error)
-	Create          func(*Note) (int64, error)
-	Update          func(*Note) error
-	Delete          func(int64) error
-	Merge           func([]int64, Note) (int64, error)
+	GetAll                   func() ([]Note, error)
+	GetActiveAtTime          func(string) ([]Note, error)
+	GetByUser                func(string) ([]Note, error)
+  CheckByStartTimeAndTitle func(string, string) bool
+	Create                   func(*Note) (int64, error)
+	Update                   func(*Note) error
+	Delete                   func(int64) error
+	Merge                    func([]int64, Note) (int64, error)
 }
 
 // Exported API. Use as models.Notes.Create(..)
@@ -93,13 +94,14 @@ type NoteOperations struct {
 //        be named singularly. This is inconsistent and an easy to get wrong
 //        oddity of the code.
 var Notes = NoteOperations{
-	GetAll:          getAllNotes,
-	GetActiveAtTime: getNotesActiveAtTime,
-	GetByUser:       getNotesByUser,
-	Create:          createNote,
-	Update:          updateNote,
-	Delete:          deleteNote,
-	Merge:           mergeNotes,
+	GetAll:                   getAllNotes,
+	GetActiveAtTime:          getNotesActiveAtTime,
+	GetByUser:                getNotesByUser,
+  CheckByStartTimeAndTitle: checkExistingNotesByTitleAndStartTime,
+	Create:                   createNote,
+	Update:                   updateNote,
+	Delete:                   deleteNote,
+	Merge:                    mergeNotes,
 }
 
 func mergeNotes(oldIds []int64, newNote Note) (id int64, err error) {
@@ -293,6 +295,19 @@ func deleteNote(id int64) error {
 	}
 
 	return nil
+}
+
+func checkExistingNotesByTitleAndStartTime(title string, startTime string) bool {
+  title = strings.Replace(title, "'", "\\'", -1)
+	query := fmt.Sprintf(
+		`SELECT * FROM notes
+     WHERE title = '%[1]s' AND starttime = '%[2]s'`, title, startTime,
+	)
+  rows, err := db.Query(query)
+  if err != nil {
+    return false
+  }
+  return rows.Next()
 }
 
 func getNotesByUser(userEmail string) ([]Note, error) {
