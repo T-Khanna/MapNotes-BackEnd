@@ -223,7 +223,7 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	if !validation.ValidatePartialNote(note) {
 		msg := "Error: Invalid Note given for updating."
-		logAndRespondWithError(w, msg, fmt.Sprintf("%s\n    Note = %+v", msg, *note))
+		logAndRespondWithError(w, msg, fmt.Sprintf("%s\n    Note = %+v", msg, note))
 		return
 	}
 
