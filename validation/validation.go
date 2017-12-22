@@ -25,7 +25,8 @@ func ValidatePartialNote(note *models.Note) bool {
 		(note.EndTime == nil || validateTime(*note.EndTime)) &&
 		(note.Longitude == nil || validateLongitude(*note.Longitude)) &&
 		(note.Latitude == nil || validateLatitude(*note.Latitude)) &&
-		(note.Tags == nil || validateTags(*note.Tags))
+		(note.Tags == nil || validateTags(*note.Tags)) &&
+		(note.Images == nil || validateImages(*note.Images))
 }
 
 func validateNotNil(object interface{}) bool {
@@ -58,6 +59,10 @@ func validateComment(comments string) bool {
 }
 
 func validateTags(tags []string) bool {
+	return true
+}
+
+func validateImages(images []string) bool {
 	return true
 }
 
