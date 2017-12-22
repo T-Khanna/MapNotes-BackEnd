@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -42,6 +43,37 @@ type Note struct {
 	Users     *[]User   `json:"users,omitempty"`
 	Tags      *[]string `json:"tags,omitempty"`
 	Images    *[]string `json:"images,omitempty"`
+}
+
+// String representation of note
+func (n *Note) String() string {
+	return fmt.Sprintf("{Title: %s, Comment: %s, StartTime: %s, EndTime: %s, Longitude: %s, Latitude: %s, Id: %s, User: %v, Tags: %v, Images: %v}",
+		spToS(n.Title), spToS(n.Comment), spToS(n.StartTime), spToS(n.EndTime),
+		fpToS(n.Longitude), fpToS(n.Latitude), ipToS(n.Id), n.Users, n.Tags, n.Images)
+}
+
+func spToS(s *string) string {
+	if s == nil {
+		return "<nil>"
+	} else {
+		return *s
+	}
+}
+
+func fpToS(f *float64) string {
+	if f == nil {
+		return "<nil>"
+	} else {
+		return strconv.FormatFloat(*f, 'E', 8, 64)
+	}
+}
+
+func ipToS(i *int64) string {
+	if i == nil {
+		return "<nil>"
+	} else {
+		return strconv.FormatInt(*i, 10)
+	}
 }
 
 // Possibly will be a similar struct for any future structs we perform CRUD on.
