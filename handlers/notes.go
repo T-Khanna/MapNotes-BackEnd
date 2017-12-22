@@ -122,12 +122,12 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if !(validation.ValidateNoteRequest(note)) {
+	if !(validation.ValidateNote(note)) {
 
 		logAndRespondWithError(
 			w,
 			"Error: Note could not be validated.",
-			"nil",
+			"Error: Note could not be validated.",
 		)
 		return
 
@@ -210,10 +210,6 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
  Creates a new Note with attributes from the request body given in JSON format.
 */
 func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	/* Decode body into Note struct
-	The third return value is the name, which should not need updating
-	and thus ignored
-	*/
 	decodeErr, note := decodeNoteStruct(r)
 
 	if decodeErr != nil {
@@ -222,6 +218,12 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			"Error: Could not decode JSON body into Note struct.",
 			decodeErr.Error(),
 		)
+		return
+	}
+
+	if !validation.ValidatePartialNote(note) {
+		msg := "Error: Invalid Note."
+		logAndRespondWithError(w, msg, fmt.Sprintf("%s\n    Note = %+v", msg, *note))
 		return
 	}
 
