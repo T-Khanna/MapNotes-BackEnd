@@ -110,9 +110,9 @@ func GetEventBriteEvents() {
         *description += "\n" + eventUrl
       }
       var venueId string = *event.VenueId
-      log.Println(venueId)
+      //log.Println(venueId)
       venueSearchUrl := generateUrl("venues/" + venueId + "/?")
-      log.Println("Venue Search URL: " + venueSearchUrl)
+      //log.Println("Venue Search URL: " + venueSearchUrl)
       venueRes, err := http.Get(venueSearchUrl)
       if err != nil {
         log.Println("Couldn't load event venue with id: " + venueId)
@@ -124,8 +124,6 @@ func GetEventBriteEvents() {
       var longitude string = *venueJSON.Address.Longitude
       var eventStartTime string = parseTimeWithoutT(*event.Start.LocalTime)
       var eventEndTime string = parseTimeWithoutT(*event.End.LocalTime)
-      count++
-      log.Println(count)
       var newNote models.Note
       newNote.Title = &name
       newNote.Comment = description
@@ -142,9 +140,16 @@ func GetEventBriteEvents() {
       eventBriteUser.Picture = "https://tctechcrunch2011.files.wordpress.com/2014/06/eventbrite_1.jpg?w=700"
       newUsers := []models.User{eventBriteUser}
       newNote.Users = &newUsers
-
-      printNote(newNote)
-      models.Notes.Create(&newNote)
+      //printNote(newNote)
+      
+      // Check if the event already exists. If not, we proceed to add it to
+      // the database
+      eventExists := models.Notes.CheckByStartTimeAndTitle(name, eventStartTime)
+      if !eventExists {
+        models.Notes.Create(&newNote)
+        count++
+        log.Println(count)
+      }
     }
   }
 }
