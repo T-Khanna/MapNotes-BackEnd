@@ -16,14 +16,16 @@ type ImageOperations struct {
 	GetByNote func(int64) ([]Image, error)
 	Create    func(Image) error
 	Merge     func([]int64, int64) error
-	//Delete    func(string) error
+	Delete    func(int64) error
+	Update    func(int64, []string) error
 }
 
 var Images = ImageOperations{
 	GetByNote: getImagesByNoteId,
 	Create:    createImage,
 	Merge:     mergeImages,
-	//Delete:    deleteImage,
+	Delete:    deleteImageByImageID,
+	Update:    updateImages,
 }
 
 func mergeImages(oldnoteids []int64, newnoteid int64) (err error) {
@@ -73,4 +75,36 @@ func createImage(image Image) error {
 	}
 
 	return err
+}
+
+func deleteImageByImageID(image_id int64) error {
+	stmt, err := db.Prepare("DELETE FROM images WHERE id = $1")
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	_, err = stmt.Exec(image_id)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return err
+}
+
+func updateImages(note_id int64, image_urls []string) error {
+	for i := 0; i < len(image_urls); i++ {
+		image_url := image_urls[i]
+		var n int64
+		err := db.QueryRow("SELECT note_id FROM images WHERE url = $1", image_url).Scan(&n)
+		if err == nil {
+			continue
+		}
+		image := Image{URL: image_url, NoteId: note_id}
+		err = createImage(image)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

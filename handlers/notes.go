@@ -222,14 +222,13 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if !validation.ValidatePartialNote(note) {
-		msg := "Error: Invalid Note."
+		msg := "Error: Invalid Note given for updating."
 		logAndRespondWithError(w, msg, fmt.Sprintf("%s\n    Note = %+v", msg, *note))
 		return
 	}
 
-	// Create new Note
+	// Update Note
 	updateErr := models.Notes.Update(note)
-
 	if updateErr != nil {
 		logAndRespondWithError(
 			w,
@@ -237,6 +236,32 @@ func NotesUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			updateErr.Error(),
 		)
 		return
+	}
+
+	// Update tags if present
+	if note.Tags != nil {
+		updateErr = models.UpdateTags(*note.Id, *note.Tags)
+		if updateErr != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Could not update note's tags.",
+				updateErr.Error(),
+			)
+			return
+		}
+	}
+
+	// Update images if present
+	if note.Images != nil {
+		updateErr = models.Images.Update(*note.Id, *note.Images)
+		if updateErr != nil {
+			logAndRespondWithError(
+				w,
+				"Error: Could not update note's images.",
+				updateErr.Error(),
+			)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusNoContent)

@@ -83,3 +83,32 @@ func ImagesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	respondWithJson(w, "success", http.StatusOK)
 
 }
+
+//Route: DELETE /api/images/:image_id
+//Deletes the image
+func ImagesDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	image_id := ps.ByName("image_id")
+
+	id, err := strconv.ParseInt(image_id, 10, 64)
+	if err != nil {
+		logAndRespondWithError(
+			w,
+			fmt.Sprintf("Error: Could not parse image id param: %s", image_id),
+			err.Error(),
+		)
+		return
+	}
+
+	deleteErr := models.Images.Delete(id)
+	if deleteErr != nil {
+		logAndRespondWithError(
+			w,
+			"Error: Could not delete image into database.",
+			deleteErr.Error(),
+		)
+		return
+	}
+
+	respondWithJson(w, "success", http.StatusOK)
+
+}
