@@ -307,6 +307,7 @@ func checkExistingNotesByTitleAndStartTime(title string, startTime string) bool 
   if err != nil {
     return false
   }
+  defer rows.Close()
   return rows.Next()
 }
 
