@@ -82,7 +82,7 @@ type NoteOperations struct {
 	GetAll                   func() ([]Note, error)
 	GetActiveAtTime          func(string) ([]Note, error)
 	GetByUser                func(string) ([]Note, error)
-  CheckByStartTimeAndTitle func(string, string) bool
+	CheckByStartTimeAndTitle func(string, string) bool
 	Create                   func(*Note) (int64, error)
 	Update                   func(*Note) error
 	Delete                   func(int64) error
@@ -97,11 +97,11 @@ var Notes = NoteOperations{
 	GetAll:                   getAllNotes,
 	GetActiveAtTime:          getNotesActiveAtTime,
 	GetByUser:                getNotesByUser,
-  CheckByStartTimeAndTitle: checkExistingNotesByTitleAndStartTime,
-	Create:                   createNote,
-	Update:                   updateNote,
-	Delete:                   deleteNote,
-	Merge:                    mergeNotes,
+	CheckByStartTimeAndTitle: checkExistingNotesByTitleAndStartTime,
+	Create: createNote,
+	Update: updateNote,
+	Delete: deleteNote,
+	Merge:  mergeNotes,
 }
 
 func mergeNotes(oldIds []int64, newNote Note) (id int64, err error) {
@@ -298,17 +298,17 @@ func deleteNote(id int64) error {
 }
 
 func checkExistingNotesByTitleAndStartTime(title string, startTime string) bool {
-  title = strings.Replace(title, "'", "\\'", -1)
+	title = strings.Replace(title, "'", "\\'", -1)
 	query := fmt.Sprintf(
 		`SELECT * FROM notes
      WHERE title = '%[1]s' AND starttime = '%[2]s'`, title, startTime,
 	)
-  rows, err := db.Query(query)
-  if err != nil {
-    return false
-  }
-  defer rows.Close()
-  return rows.Next()
+	rows, err := db.Query(query)
+	if err != nil {
+		return false
+	}
+	defer rows.Close()
+	return rows.Next()
 }
 
 func getNotesByUser(userEmail string) ([]Note, error) {
@@ -524,7 +524,7 @@ func printNote(n Note) {
 func TimeForAggregation() bool {
 	var valid bool = false
 	insertionNoteCounter.Lock()
-	if insertionNoteCounter.counter == insertionNoteCounter.target {
+	if insertionNoteCounter.counter >= insertionNoteCounter.target {
 		insertionNoteCounter.target = randomRange(1, 5)
 		log.Printf("Next merge attempt will occur in %d inserts\n", insertionNoteCounter.target)
 		//Set the counter to -1 as after a merge, we call createNote which will
@@ -794,19 +794,16 @@ func aggregateTitle(notes []Note) *string {
 
 //Our policy for comments aggregation
 func aggregateComments(notes []Note, length int) *string {
-	//Takes the first comment we find
-	i := 0
-	for i < length && *notes[i].Comment == "" {
-		i++
+	// Combines all the comments together, line separated
+	var buffer bytes.Buffer
+	for _, note := range notes {
+		if *note.Comment == "" {
+			continue
+		}
+		buffer.WriteString(fmt.Sprintf("\n%s\n", *note.Comment))
 	}
-	if i < length {
-		return notes[i].Comment
-	} else {
-		//None of the notes had any comments
-		res := ""
-		return &res
-	}
-
+	res := buffer.String()
+	return &res
 }
 
 //Our policy for latitude and longitude aggregation
