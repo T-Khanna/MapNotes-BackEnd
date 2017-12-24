@@ -72,7 +72,7 @@ func GetUserId(u User) (err error, id int64) {
 		}
 		//user.Id was -1 which means it is a new user
 		var newuser User = User{Name: name, Email: email, Picture: picture}
-		log.Println("Inserting new user %s", email)
+		log.Printf("Inserting new user. Name: %s, Email: %s ", name, email)
 		err, id = createUser(&newuser)
 
 		if err == nil {
