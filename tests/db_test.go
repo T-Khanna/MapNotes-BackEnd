@@ -449,7 +449,7 @@ func TestConstructAggregatedNote(t *testing.T) {
 	assert.True(t, containsId(ids, 3), "Missing note id 3")
 
 	assert.Equal(t, *n1.Title, *result.Title)
-	assert.Equal(t, *n2.Comment, *result.Comment)
+	assert.Equal(t, "\nBeans baby\n\nScience rules!\n", *result.Comment)
 	assert.Equal(t, "2017-11-18 10:00", *result.StartTime)
 	assert.Equal(t, "2017-11-18 11:00", *result.EndTime)
 	assert.True(t, math.Abs(1.01-*result.Longitude) < TOLERANCE)

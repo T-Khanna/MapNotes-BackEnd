@@ -180,6 +180,10 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if len(notes) == 0 {
 			//No notes were similar so no need to continue
 			log.Println("Did not find any similar notes")
+			respondWithJson(w, struct {
+				Id    int64
+				Merge bool
+			}{newId, merge}, http.StatusCreated)
 			return
 		}
 		note_ids, note := models.ConstructAggregatedNote(notes)
