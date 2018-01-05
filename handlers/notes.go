@@ -127,7 +127,8 @@ func NotesCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		logAndRespondWithError(
 			w,
 			"Error: Note could not be validated.",
-			"Error: Note could not be validated.",
+			fmt.Sprintf("%s\n    Note = %+v",
+				"Error: Note could not be validated.", note),
 		)
 		return
 
