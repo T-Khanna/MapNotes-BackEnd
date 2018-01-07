@@ -38,6 +38,7 @@ type EventBriteEvents struct {
       LocalTime *string         `json:"local,omitempty"`
     }                         `json:"end,omitempty"`
     Url *string               `json:"url,omitempty"`
+    IsFree *bool              `json:"is_free,omitempty"`
   }                         `json:"events,omitempty"`
 }
 
@@ -64,7 +65,9 @@ func printNote(n models.Note) {
   log.Println(*n.Latitude)
   //log.Println(*n.Id)
   log.Println(*n.Users)
-  //log.Println(*n.Tags)
+  if n.Tags != nil {
+    log.Println(*n.Tags)
+  }
 }   
 
 func GetEventBriteEvents() {
@@ -140,6 +143,14 @@ func GetEventBriteEvents() {
       eventBriteUser.Picture = "https://tctechcrunch2011.files.wordpress.com/2014/06/eventbrite_1.jpg?w=700"
       newUsers := []models.User{eventBriteUser}
       newNote.Users = &newUsers
+
+      // Check if is_free parameter == true from EventBrite API?
+      var isFree bool = *event.IsFree
+      if isFree {
+        newTags := []string{"free"}
+        newNote.Tags = &newTags
+      }
+
       //printNote(newNote)
       
       // Check if the event already exists. If not, we proceed to add it to
